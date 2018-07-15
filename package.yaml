@@ -27,10 +27,12 @@ dependencies:
 - criterion
 - gauge
 - pretty-simple
+- pretty-simple
 - primitive
 - protolude
 - random
 - safe
+- text
 - vector
 
 library:

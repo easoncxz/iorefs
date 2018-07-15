@@ -2,13 +2,14 @@
 
 module BinaryTree where
 
+import qualified Data.List as List
 import Prelude hiding (head, last, tail)
 
 data BinaryTree a
   = EmptyTree
-  | Branch a
-           (BinaryTree a)
-           (BinaryTree a)
+  | Branch { label :: a
+           , left :: BinaryTree a
+           , right :: BinaryTree a }
   deriving (Show, Eq, Functor)
 
 leaf :: a -> BinaryTree a
@@ -69,3 +70,66 @@ rootNext :: BinaryTree a -> Maybe a
 rootNext EmptyTree = Nothing
 rootNext (Branch _ _ EmptyTree) = Nothing
 rootNext (Branch _ _ r) = head r
+
+insert :: (Ord a) => a -> BinaryTree a -> BinaryTree a
+insert a EmptyTree = leaf a
+insert a b@Branch {label, left, right} =
+  if a < label
+    then b {left = insert a left}
+    else b {right = insert a right}
+
+fromList :: (Ord a) => [a] -> BinaryTree a
+fromList = List.foldl' (flip insert) EmptyTree
+
+prop_binarySearchTreeInvariant :: [Int] -> Bool
+prop_binarySearchTreeInvariant xs =
+  let tree = fromList xs
+      inorder = inorderTraversal tree
+      sorted = List.sort xs
+   in inorder == sorted
+
+readHeightLabel :: BinaryTree (a, Int) -> Int
+readHeightLabel EmptyTree = -1
+readHeightLabel (Branch (_, h) _ _) = h
+
+labelWithHeight :: BinaryTree a -> BinaryTree (a, Int)
+labelWithHeight EmptyTree = EmptyTree
+labelWithHeight (Branch n l r) =
+  let lh = labelWithHeight l
+      rh = labelWithHeight r
+   in Branch (n, 1 + max (readHeightLabel lh) (readHeightLabel rh)) lh rh
+
+removeLabel :: BinaryTree (a, h) -> BinaryTree a
+removeLabel EmptyTree = EmptyTree
+removeLabel (Branch (n, _) l r) = Branch n (removeLabel l) (removeLabel r)
+
+prop_labelAndUnlabel :: [Int] -> Bool
+prop_labelAndUnlabel xs =
+  let tree = fromList xs
+      withLabel = labelWithHeight tree
+      withoutLabel = removeLabel withLabel
+   in withoutLabel == tree
+
+nodeHeight :: BinaryTree Int -> Int
+nodeHeight EmptyTree = -1
+nodeHeight (Branch n _ _) = n
+
+heightTree :: BinaryTree a -> BinaryTree Int
+heightTree EmptyTree = EmptyTree
+heightTree (Branch n l r) =
+  let lt = heightTree l
+      rt = heightTree r
+   in Branch (1 + max (nodeHeight lt) (nodeHeight rt)) lt rt
+
+zipTree :: BinaryTree a -> BinaryTree b -> BinaryTree (a, b)
+zipTree EmptyTree _ = EmptyTree
+zipTree _ EmptyTree = EmptyTree
+zipTree (Branch a al ar) (Branch b bl br) =
+  Branch (a, b) (zipTree al bl) (zipTree ar br)
+
+prop_labelFromZip :: [Int] -> Bool
+prop_labelFromZip xs =
+  let tree = fromList xs
+      labeled = labelWithHeight tree
+      zipped = zipTree tree (heightTree tree)
+   in labeled == zipped
