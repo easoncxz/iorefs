@@ -1,6 +1,7 @@
 import Relude
 
 import Test.QuickCheck
+import qualified TestQuickSelect
 
 prop_reverseList :: [Int] -> Bool
 prop_reverseList xs = reverseList xs == reverse xs
@@ -32,3 +33,4 @@ main = do
   quickCheck prop_myFoldL
   quickCheck prop_myFoldR
   quickCheck prop_diffConcat
+  TestQuickSelect.tests
