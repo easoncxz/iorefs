@@ -11,3 +11,4 @@ tests :: IO ()
 tests = do
   quickCheck prop_selectSmall
   quickCheck prop_partition
+  quickCheck prop_quicksort

@@ -143,3 +143,22 @@ modelSelectSmall n xs = List.sort xs `atMay` n
 
 prop_selectSmall :: Int -> [Int] -> Bool
 prop_selectSmall n xs = selectSmall n xs == modelSelectSmall n xs
+
+quicksortST :: (Show a, Ord a, U.Unbox a) => UM.MVector s a -> ST s ()
+quicksortST xs = do
+  mbPivotIx <- partition xs
+  case mbPivotIx of
+    Nothing -> return ()
+    Just pivotIx -> do
+      quicksortST (UM.slice 0 pivotIx xs)
+      quicksortST (UM.slice (pivotIx + 1) (UM.length xs - (pivotIx + 1)) xs)
+
+quicksort :: (U.Unbox a, Ord a, Show a) => [a] -> [a]
+quicksort xs =
+  runST $ do
+    mut <- U.thaw (U.fromList xs)
+    quicksortST mut
+    U.toList <$> U.freeze mut
+
+prop_quicksort :: [Int] -> Bool
+prop_quicksort xs = quicksort xs == List.sort xs
