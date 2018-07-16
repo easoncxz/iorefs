@@ -133,3 +133,16 @@ prop_labelFromZip xs =
       labeled = labelWithHeight tree
       zipped = zipTree tree (heightTree tree)
    in labeled == zipped
+
+unzipTree :: BinaryTree (a, b) -> (BinaryTree a, BinaryTree b)
+unzipTree EmptyTree = (EmptyTree, EmptyTree)
+unzipTree (Branch (a, b) l r) =
+  let (la, lb) = unzipTree l
+      (ra, rb) = unzipTree r
+   in (Branch a la ra, Branch b lb rb)
+
+prop_zipUnzip :: [Int] -> Bool
+prop_zipUnzip xs =
+  let tree = fromList xs
+      heights = heightTree tree
+   in unzipTree (zipTree tree heights) == (tree, heights)
