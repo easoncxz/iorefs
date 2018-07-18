@@ -35,6 +35,9 @@ dependencies:
 - text
 - vector
 
+default-extensions:
+- NamedFieldPuns
+
 library:
   source-dirs: src
 
