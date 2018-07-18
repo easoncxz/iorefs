@@ -5,6 +5,8 @@ module BinaryTree where
 import qualified Data.List as List
 import Prelude hiding (head, last, tail)
 
+import Test.QuickCheck
+
 data BinaryTree a
   = EmptyTree
   | Branch { label :: a
@@ -14,6 +16,14 @@ data BinaryTree a
 
 leaf :: a -> BinaryTree a
 leaf n = Branch n EmptyTree EmptyTree
+
+-- | Build a bigger tree with the given subtree as the left-child of a new node
+-- with the given value.
+asLeft :: BinaryTree a -> a -> BinaryTree a
+asLeft t a = Branch a t EmptyTree
+
+asRight :: BinaryTree a -> a -> BinaryTree a
+asRight t a = Branch a EmptyTree t
 
 showTree :: Show a => Int -> BinaryTree a -> String
 showTree indent t =
@@ -35,13 +45,11 @@ tree1 = Branch 5 (Branch 2 (leaf 1) (leaf 4)) (leaf 3)
 
 inorderTraversal :: BinaryTree a -> [a]
 inorderTraversal EmptyTree = []
-inorderTraversal (Branch n l r) =
-  inorderTraversal l ++ [n] ++ inorderTraversal r
+inorderTraversal (Branch n l r) = inorderTraversal l ++ [n] ++ inorderTraversal r
 
 preorderTraversal :: BinaryTree a -> [a]
 preorderTraversal EmptyTree = []
-preorderTraversal (Branch n l r) =
-  [n] ++ preorderTraversal l ++ preorderTraversal r
+preorderTraversal (Branch n l r) = [n] ++ preorderTraversal l ++ preorderTraversal r
 
 -- TODO
 levelOrderTraversal :: BinaryTree a -> [a]
@@ -81,6 +89,9 @@ insert a b@Branch {label, left, right} =
 fromList :: (Ord a) => [a] -> BinaryTree a
 fromList = List.foldl' (flip insert) EmptyTree
 
+instance (Arbitrary a, Ord a) => Arbitrary (BinaryTree a) where
+  arbitrary = fromList <$> arbitrary
+
 prop_binarySearchTreeInvariant :: [Int] -> Bool
 prop_binarySearchTreeInvariant xs =
   let tree = fromList xs
@@ -103,10 +114,9 @@ removeLabel :: BinaryTree (a, h) -> BinaryTree a
 removeLabel EmptyTree = EmptyTree
 removeLabel (Branch (n, _) l r) = Branch n (removeLabel l) (removeLabel r)
 
-prop_labelAndUnlabel :: [Int] -> Bool
-prop_labelAndUnlabel xs =
-  let tree = fromList xs
-      withLabel = labelWithHeight tree
+prop_labelAndUnlabel :: BinaryTree Int -> Bool
+prop_labelAndUnlabel tree =
+  let withLabel = labelWithHeight tree
       withoutLabel = removeLabel withLabel
    in withoutLabel == tree
 
@@ -121,18 +131,34 @@ heightTree (Branch n l r) =
       rt = heightTree r
    in Branch (1 + max (nodeHeight lt) (nodeHeight rt)) lt rt
 
+heightTree' :: BinaryTree a -> BinaryTree Int
+heightTree' EmptyTree = EmptyTree
+heightTree' (Branch _ EmptyTree EmptyTree) = leaf 0
+heightTree' (Branch _ l EmptyTree) =
+  let lt = heightTree' l
+      h = nodeHeight lt
+   in Branch (h + 1) lt EmptyTree
+heightTree' (Branch _ EmptyTree r) =
+  let rt = heightTree' r
+      h = nodeHeight rt
+   in Branch (h + 1) EmptyTree rt
+heightTree' (Branch _ l r) =
+  let lt = heightTree' l
+      rt = heightTree' r
+      h = max (nodeHeight lt) (nodeHeight rt)
+   in Branch (h + 1) lt rt
+
+prop_heightTree :: BinaryTree Int -> Bool
+prop_heightTree tree = heightTree tree == heightTree' tree
+
 zipTree :: BinaryTree a -> BinaryTree b -> BinaryTree (a, b)
 zipTree EmptyTree _ = EmptyTree
 zipTree _ EmptyTree = EmptyTree
-zipTree (Branch a al ar) (Branch b bl br) =
-  Branch (a, b) (zipTree al bl) (zipTree ar br)
+zipTree (Branch a al ar) (Branch b bl br) = Branch (a, b) (zipTree al bl) (zipTree ar br)
 
-prop_labelFromZip :: [Int] -> Bool
-prop_labelFromZip xs =
-  let tree = fromList xs
-      labeled = labelWithHeight tree
-      zipped = zipTree tree (heightTree tree)
-   in labeled == zipped
+-- | Our two ways of getting a `BinaryTree (a, Int)` are equivalent
+prop_labelFromZip :: BinaryTree Int -> Bool
+prop_labelFromZip tree = labelWithHeight tree == zipTree tree (heightTree tree)
 
 unzipTree :: BinaryTree (a, b) -> (BinaryTree a, BinaryTree b)
 unzipTree EmptyTree = (EmptyTree, EmptyTree)
@@ -146,3 +172,28 @@ prop_zipUnzip xs =
   let tree = fromList xs
       heights = heightTree tree
    in unzipTree (zipTree tree heights) == (tree, heights)
+
+isSubtreeOf :: (Eq a) => BinaryTree a -> BinaryTree a -> Bool
+isSubtreeOf EmptyTree _ = True
+isSubtreeOf Branch {} EmptyTree = False
+isSubtreeOf a@(Branch an al ar) b@(Branch bn bl br) =
+  an == bn && al `isSubtreeOf` bl && ar `isSubtreeOf` br || a `isSubtreeOf` bl || a `isSubtreeOf` br
+
+prop_subtree :: BinaryTree Int -> Bool
+prop_subtree t =
+  case t of
+    EmptyTree -> discard
+    Branch n l r -> l `isSubtreeOf` t && r `isSubtreeOf` t
+
+prop_subtreeTransitivity :: BinaryTree Int -> BinaryTree Int -> BinaryTree Int -> Property
+prop_subtreeTransitivity a b c = a `isSubtreeOf` b && b `isSubtreeOf` c ==> a `isSubtreeOf` c
+
+prop_zipYieldsSubtrees :: BinaryTree Int -> BinaryTree Char -> Bool
+prop_zipYieldsSubtrees ta tb =
+  let (ta', tb') = unzipTree (zipTree ta tb)
+   in ta' `isSubtreeOf` ta && tb' `isSubtreeOf` tb
+
+-- | Positive corresponds to a taller left-subtree
+balanceFactor :: BinaryTree (a, Int) -> Int
+balanceFactor EmptyTree = 0
+balanceFactor (Branch _ l r) = nodeHeight (snd <$> l) - nodeHeight (snd <$> r)
