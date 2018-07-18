@@ -197,3 +197,9 @@ prop_zipYieldsSubtrees ta tb =
 balanceFactor :: BinaryTree (a, Int) -> Int
 balanceFactor EmptyTree = 0
 balanceFactor (Branch _ l r) = nodeHeight (snd <$> l) - nodeHeight (snd <$> r)
+
+isAVL :: (Ord a) => BinaryTree a -> Bool
+isAVL t = go (labelWithHeight t)
+  where
+    go EmptyTree = True
+    go b@(Branch _ l r) = balanceFactor b `elem` [-1 .. 1] && go l && go r
