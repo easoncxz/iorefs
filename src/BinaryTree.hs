@@ -6,7 +6,7 @@ import qualified Data.List as List
 import Data.Maybe (fromMaybe)
 import Prelude hiding (head, last, tail)
 
-import Test.QuickCheck (Arbitrary(arbitrary), Property, (==>), discard)
+import Test.QuickCheck (Arbitrary(arbitrary), Property, (==>), conjoin, discard)
 
 data BinaryTree a
   = EmptyTree
@@ -24,9 +24,9 @@ asLeftOf t a = Branch a t EmptyTree
 asRightOf :: BinaryTree a -> a -> BinaryTree a
 asRightOf t a = Branch a EmptyTree t
 
-readLabel :: BinaryTree a -> Maybe a
-readLabel EmptyTree = Nothing
-readLabel (Branch n _ _) = Just n
+node :: BinaryTree a -> Maybe a
+node EmptyTree = Nothing
+node (Branch n _ _) = Just n
 
 tree1 :: BinaryTree Int
 tree1 = Branch 5 (Branch 2 (leaf 1) (leaf 4)) (leaf 3)
@@ -101,6 +101,9 @@ prop_zipUnzip xs =
       heights = heightTree tree
    in unzipTree (zipTree tree heights) == (tree, heights)
 
+emptyTreeHeight :: Int
+emptyTreeHeight = -1
+
 -- | Leaf nodes are of height 0
 heightTree :: BinaryTree a -> BinaryTree Int
 heightTree EmptyTree = EmptyTree
@@ -108,17 +111,21 @@ heightTree (Branch n l r) =
   let lt = heightTree l
       rt = heightTree r
       maybeOneMore = do
-        tallerChild <- max (readLabel lt) (readLabel rt)
+        tallerChild <- max (node lt) (node rt)
         return (tallerChild + 1)
    in Branch (fromMaybe leafNodeHeight maybeOneMore) lt rt
   where
-    leafNodeHeight = 0
+    leafNodeHeight = emptyTreeHeight + 1
 
 withHeight :: BinaryTree t -> BinaryTree (t, Int)
 withHeight t = zipTree t (heightTree t)
 
 height :: BinaryTree t -> Maybe Int
-height = fmap snd . readLabel . withHeight
+height = fmap snd . node . withHeight
+
+readHeightLabel :: BinaryTree (a, Int) -> Maybe Int
+readHeightLabel EmptyTree = Nothing
+readHeightLabel (Branch (_, h) _ _) = Just h
 
 isSubtreeOf :: (Eq a) => BinaryTree a -> BinaryTree a -> Bool
 isSubtreeOf EmptyTree _ = True
@@ -143,13 +150,62 @@ prop_zipYieldsSubtrees ta tb =
 -- | Positive corresponds to a taller left-subtree
 balanceFactor :: BinaryTree (a, Int) -> Int
 balanceFactor EmptyTree = 0
-balanceFactor (Branch _ l r) = readHeight l - readHeight r
+balanceFactor (Branch _ l r) =
+  (readHeightLabel l `or` emptyTreeHeight) - (readHeightLabel r `or` emptyTreeHeight)
   where
-    readHeight EmptyTree = -1
-    readHeight (Branch (_, h) _ _) = h
+    or mb def = fromMaybe def mb
 
 isAVL :: (Ord a) => BinaryTree a -> Bool
 isAVL t = go (withHeight t)
   where
     go EmptyTree = True
     go b@(Branch _ l r) = balanceFactor b `elem` [-1 .. 1] && go l && go r
+
+rotateLeft :: BinaryTree (a, Int) -> BinaryTree (a, Int)
+rotateLeft EmptyTree = EmptyTree
+rotateLeft b@(Branch _ _ EmptyTree) = b
+rotateLeft p@(Branch (pn, _) pl c@(Branch (cn, _) cl cr)) =
+  let p' =
+        Branch
+          (pn, 1 + fromMaybe emptyTreeHeight (max (readHeightLabel pl) (readHeightLabel cl)))
+          pl
+          cl
+      c' =
+        Branch
+          (cn, 1 + fromMaybe emptyTreeHeight (max (readHeightLabel p') (readHeightLabel cr)))
+          p'
+          cr
+   in c'
+
+rotateLeftMaybe :: BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int))
+rotateLeftMaybe EmptyTree = Nothing
+rotateLeftMaybe (Branch _ _ EmptyTree) = Nothing
+rotateLeftMaybe b = Just (rotateLeft b)
+
+rotateRight :: BinaryTree (a, Int) -> BinaryTree (a, Int)
+rotateRight EmptyTree = EmptyTree
+rotateRight b@(Branch _ EmptyTree EmptyTree) = b
+rotateRight b@(Branch _ EmptyTree Branch {}) = b
+rotateRight p@(Branch (pn, _) c@(Branch (cn, _) cl cr) pr) =
+  let p' =
+        Branch
+          (pn, 1 + fromMaybe emptyTreeHeight (max (readHeightLabel cr) (readHeightLabel pr)))
+          cr
+          pr
+      c' =
+        Branch
+          (cn, 1 + fromMaybe emptyTreeHeight (max (readHeightLabel cl) (readHeightLabel p')))
+          cl
+          p'
+   in c'
+
+rotateRightMaybe :: BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int))
+rotateRightMaybe EmptyTree = Nothing
+rotateRightMaybe (Branch _ EmptyTree _) = Nothing
+rotateRightMaybe b = Just (rotateRight b)
+
+prop_rotateBackAndForthAgain :: BinaryTree Int -> Bool
+prop_rotateBackAndForthAgain t =
+  let th = withHeight t
+   in fromMaybe th (rotateLeftMaybe =<< rotateRightMaybe th) == th &&
+      fromMaybe th (rotateRightMaybe =<< rotateLeftMaybe th) == th
