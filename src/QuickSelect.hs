@@ -1,7 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE GADTs #-}
-
 module QuickSelect where
 
 import Control.Monad
@@ -26,11 +22,7 @@ checkIndexOrderingInvariant loPtr hiPtr len = do
     else return ()
 
 checkPartitionConditionInvariant ::
-     (G.Vector v a, Ord a, Show a)
-  => STRef s Int
-  -> STRef s Int
-  -> v a
-  -> ST s ()
+     (G.Vector v a, Ord a, Show a) => STRef s Int -> STRef s Int -> v a -> ST s ()
 checkPartitionConditionInvariant loPtr hiPtr xs = do
   lo <- readSTRef loPtr
   hi <- readSTRef hiPtr
@@ -39,13 +31,10 @@ checkPartitionConditionInvariant loPtr hiPtr xs = do
       smalls = G.slice 1 (lo - 1) xs
       larges = G.slice (hi + 1) (len - hi - 1) xs
   if not (G.all (< pivot) smalls)
-    then error $
-         "checkPartitionConditionInvariant failed on smalls: " ++
-         show (lo, hi, G.toList xs)
+    then error $ "checkPartitionConditionInvariant failed on smalls: " ++ show (lo, hi, G.toList xs)
     else if not (G.all (>= pivot) larges)
            then error $
-                "checkPartitionConditionInvariant failed on larges: " ++
-                show (lo, hi, G.toList xs)
+                "checkPartitionConditionInvariant failed on larges: " ++ show (lo, hi, G.toList xs)
            else return ()
 
 whileM_ :: Monad m => m Bool -> m a -> m ()
@@ -103,17 +92,7 @@ partition' xs =
         frozen <- U.toList <$> U.freeze mut
         return (Just (pivotIx, frozen))
 
-prop_partition :: [Int] -> Bool
-prop_partition xs =
-  let nonEmpty = do
-        (pivotIx, after) <- partition' xs
-        let (smalls, nonsmalls) = List.splitAt pivotIx after
-        pivot <- headMay nonsmalls
-        return (all (< pivot) smalls && all (>= pivot) nonsmalls)
-   in fromMaybe True nonEmpty
-
-selectSmallST ::
-     (Show a, Ord a, U.Unbox a) => Int -> UM.MVector s a -> ST s (Maybe a)
+selectSmallST :: (Show a, Ord a, U.Unbox a) => Int -> UM.MVector s a -> ST s (Maybe a)
 selectSmallST n xs
   | n < 0 || UM.length xs <= n = return Nothing
 selectSmallST n xs = do
@@ -141,9 +120,6 @@ selectSmall n xs =
 modelSelectSmall :: Ord a => Int -> [a] -> Maybe a
 modelSelectSmall n xs = List.sort xs `atMay` n
 
-prop_selectSmall :: Int -> [Int] -> Bool
-prop_selectSmall n xs = selectSmall n xs == modelSelectSmall n xs
-
 quicksortST :: (Show a, Ord a, U.Unbox a) => UM.MVector s a -> ST s ()
 quicksortST xs = do
   mbPivotIx <- partition xs
@@ -159,6 +135,3 @@ quicksort xs =
     mut <- U.thaw (U.fromList xs)
     quicksortST mut
     U.toList <$> U.freeze mut
-
-prop_quicksort :: [Int] -> Bool
-prop_quicksort xs = quicksort xs == List.sort xs

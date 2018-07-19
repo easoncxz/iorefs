@@ -1,7 +1,8 @@
-module TestQueues where
+module Test.Queues where
 
 import Control.Monad
 import qualified Data.List as List
+import Data.Proxy
 import Test.QuickCheck
 
 import BankerQueue (BankerQueue(..))
@@ -27,7 +28,19 @@ queueListMatch q l =
     (Nothing, Nothing) -> True
     _ -> False
 
-prop_queueCorrectness :: Queue q => q Int -> [Int] -> Bool
-prop_queueCorrectness q ns =
-  let fullQueue = foldl (flip Queue.enqueue) q ns
+queueCorrectness ::
+     forall q. Queue q
+  => Proxy q
+  -> [Int]
+  -> Bool
+queueCorrectness _ ns =
+  let emptyQueue = Queue.empty :: q Int
+      fullQueue = foldl (flip Queue.enqueue) emptyQueue ns
    in queueListMatch fullQueue ns
+
+prop_queueCorrectness :: [Int] -> Bool
+prop_queueCorrectness ns =
+  and
+    [ queueCorrectness (Proxy :: Proxy BankerQueue) ns
+    , queueCorrectness (Proxy :: Proxy NaiveLinkedQueue) ns
+    ]

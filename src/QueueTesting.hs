@@ -1,7 +1,3 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE BangPatterns #-}
-
 module QueueTesting where
 
 import BankerQueue (BankerQueue(..))

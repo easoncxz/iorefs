@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveFunctor #-}
-
 module BinaryTree where
 
 import qualified Data.List as List
@@ -76,13 +74,6 @@ fromList = List.foldl' (flip insert) EmptyTree
 instance (Arbitrary a, Ord a) => Arbitrary (BinaryTree a) where
   arbitrary = fromList <$> arbitrary
 
-prop_binarySearchTreeInvariant :: [Int] -> Bool
-prop_binarySearchTreeInvariant xs =
-  let tree = fromList xs
-      inorder = inorderTraversal tree
-      sorted = List.sort xs
-   in inorder == sorted
-
 zipTree :: BinaryTree a -> BinaryTree b -> BinaryTree (a, b)
 zipTree EmptyTree _ = EmptyTree
 zipTree _ EmptyTree = EmptyTree
@@ -94,12 +85,6 @@ unzipTree (Branch (a, b) l r) =
   let (la, lb) = unzipTree l
       (ra, rb) = unzipTree r
    in (Branch a la ra, Branch b lb rb)
-
-prop_zipUnzip :: [Int] -> Bool
-prop_zipUnzip xs =
-  let tree = fromList xs
-      heights = heightTree tree
-   in unzipTree (zipTree tree heights) == (tree, heights)
 
 emptyTreeHeight :: Int
 emptyTreeHeight = -1
@@ -140,26 +125,11 @@ insertWithHeight a (Branch (n, h) l r) =
     else let r' = insertWithHeight a r
           in Branch (n, wouldBeHeight l r') l r'
 
-prop_insertWithHeightHomomorphism :: Int -> BinaryTree Int -> Bool
-prop_insertWithHeightHomomorphism x tree =
-  withHeight (insert x tree) == insertWithHeight x (withHeight tree)
-
 isSubtreeOf :: (Eq a) => BinaryTree a -> BinaryTree a -> Bool
 isSubtreeOf EmptyTree _ = True
 isSubtreeOf Branch {} EmptyTree = False
 isSubtreeOf a@(Branch an al ar) b@(Branch bn bl br) =
   an == bn && al `isSubtreeOf` bl && ar `isSubtreeOf` br || a `isSubtreeOf` bl || a `isSubtreeOf` br
-
-prop_subtree :: BinaryTree Int -> Bool
-prop_subtree t =
-  case t of
-    EmptyTree -> discard
-    Branch n l r -> l `isSubtreeOf` t && r `isSubtreeOf` t
-
-prop_zipYieldsSubtrees :: BinaryTree Int -> BinaryTree Char -> Bool
-prop_zipYieldsSubtrees ta tb =
-  let (ta', tb') = unzipTree (zipTree ta tb)
-   in ta' `isSubtreeOf` ta && tb' `isSubtreeOf` tb
 
 -- | Positive corresponds to a taller left-subtree
 balanceFactor :: BinaryTree (a, Int) -> Int
@@ -204,9 +174,3 @@ rotateRightMaybe :: BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int))
 rotateRightMaybe EmptyTree = Nothing
 rotateRightMaybe (Branch _ EmptyTree _) = Nothing
 rotateRightMaybe b = Just (rotateRight b)
-
-prop_rotateBackAndForthAgain :: BinaryTree Int -> Bool
-prop_rotateBackAndForthAgain t =
-  let th = withHeight t
-   in fromMaybe th (rotateLeftMaybe =<< rotateRightMaybe th) == th &&
-      fromMaybe th (rotateRightMaybe =<< rotateLeftMaybe th) == th

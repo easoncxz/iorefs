@@ -36,7 +36,18 @@ dependencies:
 - vector
 
 default-extensions:
+- BangPatterns
+- DeriveFunctor
+- FlexibleContexts
+- FlexibleInstances
+- GADTs
+- GeneralizedNewtypeDeriving
+- MultiParamTypeClasses
 - NamedFieldPuns
+- PartialTypeSignatures
+- ScopedTypeVariables
+- TypeApplications
+- TypeFamilies
 
 library:
   source-dirs: src
@@ -62,3 +73,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - iorefs
+    - tasty
+    - tasty-discover
+    - tasty-quickcheck
