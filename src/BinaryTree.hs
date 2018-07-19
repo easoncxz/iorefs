@@ -127,6 +127,23 @@ readHeightLabel :: BinaryTree (a, Int) -> Maybe Int
 readHeightLabel EmptyTree = Nothing
 readHeightLabel (Branch (_, h) _ _) = Just h
 
+-- | Height of the tree if a tree is to be built using the two given trees as subtrees
+wouldBeHeight :: BinaryTree (a, Int) -> BinaryTree (a, Int) -> Int
+wouldBeHeight l r = 1 + fromMaybe emptyTreeHeight (max (readHeightLabel l) (readHeightLabel r))
+
+insertWithHeight :: (Ord a) => a -> BinaryTree (a, Int) -> BinaryTree (a, Int)
+insertWithHeight a EmptyTree = Branch (a, emptyTreeHeight + 1) EmptyTree EmptyTree
+insertWithHeight a (Branch (n, h) l r) =
+  if a < n
+    then let l' = insertWithHeight a l
+          in Branch (n, wouldBeHeight l' r) l' r
+    else let r' = insertWithHeight a r
+          in Branch (n, wouldBeHeight l r') l r'
+
+prop_insertWithHeightHomomorphism :: Int -> BinaryTree Int -> Bool
+prop_insertWithHeightHomomorphism x tree =
+  withHeight (insert x tree) == insertWithHeight x (withHeight tree)
+
 isSubtreeOf :: (Eq a) => BinaryTree a -> BinaryTree a -> Bool
 isSubtreeOf EmptyTree _ = True
 isSubtreeOf Branch {} EmptyTree = False
@@ -138,9 +155,6 @@ prop_subtree t =
   case t of
     EmptyTree -> discard
     Branch n l r -> l `isSubtreeOf` t && r `isSubtreeOf` t
-
-prop_subtreeTransitivity :: BinaryTree Int -> BinaryTree Int -> BinaryTree Int -> Property
-prop_subtreeTransitivity a b c = a `isSubtreeOf` b && b `isSubtreeOf` c ==> a `isSubtreeOf` c
 
 prop_zipYieldsSubtrees :: BinaryTree Int -> BinaryTree Char -> Bool
 prop_zipYieldsSubtrees ta tb =
@@ -155,26 +169,21 @@ balanceFactor (Branch _ l r) =
   where
     or mb def = fromMaybe def mb
 
+nodeAdmissable :: BinaryTree (a, Int) -> Bool
+nodeAdmissable t = balanceFactor t `elem` [-1 .. 1]
+
 isAVL :: (Ord a) => BinaryTree a -> Bool
 isAVL t = go (withHeight t)
   where
     go EmptyTree = True
-    go b@(Branch _ l r) = balanceFactor b `elem` [-1 .. 1] && go l && go r
+    go b@(Branch _ l r) = nodeAdmissable b && go l && go r
 
 rotateLeft :: BinaryTree (a, Int) -> BinaryTree (a, Int)
 rotateLeft EmptyTree = EmptyTree
 rotateLeft b@(Branch _ _ EmptyTree) = b
 rotateLeft p@(Branch (pn, _) pl c@(Branch (cn, _) cl cr)) =
-  let p' =
-        Branch
-          (pn, 1 + fromMaybe emptyTreeHeight (max (readHeightLabel pl) (readHeightLabel cl)))
-          pl
-          cl
-      c' =
-        Branch
-          (cn, 1 + fromMaybe emptyTreeHeight (max (readHeightLabel p') (readHeightLabel cr)))
-          p'
-          cr
+  let p' = Branch (pn, wouldBeHeight pl cl) pl cl
+      c' = Branch (cn, wouldBeHeight p' cr) p' cr
    in c'
 
 rotateLeftMaybe :: BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int))
@@ -187,16 +196,8 @@ rotateRight EmptyTree = EmptyTree
 rotateRight b@(Branch _ EmptyTree EmptyTree) = b
 rotateRight b@(Branch _ EmptyTree Branch {}) = b
 rotateRight p@(Branch (pn, _) c@(Branch (cn, _) cl cr) pr) =
-  let p' =
-        Branch
-          (pn, 1 + fromMaybe emptyTreeHeight (max (readHeightLabel cr) (readHeightLabel pr)))
-          cr
-          pr
-      c' =
-        Branch
-          (cn, 1 + fromMaybe emptyTreeHeight (max (readHeightLabel cl) (readHeightLabel p')))
-          cl
-          p'
+  let p' = Branch (pn, wouldBeHeight cr pr) cr pr
+      c' = Branch (cn, wouldBeHeight cl p') cl p'
    in c'
 
 rotateRightMaybe :: BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int))
