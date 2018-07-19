@@ -1,4 +1,4 @@
-module QueueBenchmarking where
+module QueueTesting where
 
 import BankerQueue (BankerQueue(..))
 import qualified BankerQueue as BankerQueue
