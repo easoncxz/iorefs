@@ -6,8 +6,8 @@ import qualified Data.List as List
 import Data.Maybe (fromMaybe)
 import Test.QuickCheck (discard)
 
-prop_binarySearchTreeInvariant :: [Int] -> Bool
-prop_binarySearchTreeInvariant xs =
+prop_searchProperty :: [Int] -> Bool
+prop_searchProperty xs =
   let tree = fromList xs
       inorder = inorderTraversal tree
       sorted = List.sort xs

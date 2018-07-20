@@ -115,14 +115,15 @@ readHeightLabel (Branch (_, h) _ _) = Just h
 wouldBeHeight :: BinaryTree (a, Int) -> BinaryTree (a, Int) -> Int
 wouldBeHeight l r = 1 + fromMaybe emptyTreeHeight (max (readHeightLabel l) (readHeightLabel r))
 
+branchWithHeight :: t -> BinaryTree (t, Int) -> BinaryTree (t, Int) -> BinaryTree (t, Int)
+branchWithHeight n l r = Branch (n, wouldBeHeight l r) l r
+
 insertWithHeight :: (Ord a) => a -> BinaryTree (a, Int) -> BinaryTree (a, Int)
 insertWithHeight a EmptyTree = Branch (a, emptyTreeHeight + 1) EmptyTree EmptyTree
 insertWithHeight a (Branch (n, h) l r) =
   if a < n
-    then let l' = insertWithHeight a l
-          in Branch (n, wouldBeHeight l' r) l' r
-    else let r' = insertWithHeight a r
-          in Branch (n, wouldBeHeight l r') l r'
+    then branchWithHeight n (insertWithHeight a l) r
+    else branchWithHeight n l (insertWithHeight a r)
 
 isSubtreeOf :: (Eq a) => BinaryTree a -> BinaryTree a -> Bool
 isSubtreeOf EmptyTree _ = True
@@ -150,10 +151,8 @@ isAVL t = go (withHeight t)
 rotateLeft :: BinaryTree (a, Int) -> BinaryTree (a, Int)
 rotateLeft EmptyTree = EmptyTree
 rotateLeft b@(Branch _ _ EmptyTree) = b
-rotateLeft p@(Branch (pn, _) pl c@(Branch (cn, _) cl cr)) =
-  let p' = Branch (pn, wouldBeHeight pl cl) pl cl
-      c' = Branch (cn, wouldBeHeight p' cr) p' cr
-   in c'
+rotateLeft (Branch (pn, _) pl (Branch (cn, _) cl cr)) =
+  branchWithHeight cn (branchWithHeight pn pl cl) cr
 
 rotateLeftMaybe :: BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int))
 rotateLeftMaybe EmptyTree = Nothing
@@ -165,9 +164,7 @@ rotateRight EmptyTree = EmptyTree
 rotateRight b@(Branch _ EmptyTree EmptyTree) = b
 rotateRight b@(Branch _ EmptyTree Branch {}) = b
 rotateRight p@(Branch (pn, _) c@(Branch (cn, _) cl cr) pr) =
-  let p' = Branch (pn, wouldBeHeight cr pr) cr pr
-      c' = Branch (cn, wouldBeHeight cl p') cl p'
-   in c'
+  branchWithHeight cn cl (branchWithHeight pn cr pr)
 
 rotateRightMaybe :: BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int))
 rotateRightMaybe EmptyTree = Nothing
