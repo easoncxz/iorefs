@@ -110,8 +110,7 @@ height :: BinaryTree t -> Int
 height = fromMaybe emptyTreeHeight . fmap nLabel . asBranch . heightTree
 
 readHeightLabel :: BinaryTree (a, Int) -> Maybe Int
-readHeightLabel EmptyTree = Nothing
-readHeightLabel (Branch (Node (_, h) _ _)) = Just h
+readHeightLabel = fmap (snd . nLabel) . asBranch
 
 -- | Height of the tree if a tree is to be built using the two given trees as subtrees
 wouldBeHeight :: BinaryTree (a, Int) -> BinaryTree (a, Int) -> Int
@@ -120,8 +119,11 @@ wouldBeHeight l r = 1 + fromMaybe emptyTreeHeight (max (readHeightLabel l) (read
 nodeWithHeight :: t -> BinaryTree (t, Int) -> BinaryTree (t, Int) -> Node (t, Int)
 nodeWithHeight n l r = Node (n, wouldBeHeight l r) l r
 
+leafWithHeight :: t -> BinaryTree (t, Int)
+leafWithHeight n = Branch (nodeWithHeight n EmptyTree EmptyTree)
+
 insertWithHeight :: (Ord a) => a -> BinaryTree (a, Int) -> BinaryTree (a, Int)
-insertWithHeight a EmptyTree = Branch (nodeWithHeight a EmptyTree EmptyTree)
+insertWithHeight a EmptyTree = leafWithHeight a
 insertWithHeight a (Branch (Node (n, h) l r)) =
   if a < n
     then Branch (nodeWithHeight n (insertWithHeight a l) r)
