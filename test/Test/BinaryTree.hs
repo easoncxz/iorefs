@@ -39,3 +39,8 @@ prop_rotateBackAndForthAgain t =
   let th = withHeight t
    in fromMaybe th (rotateLeftMaybe =<< rotateRightMaybe th) == th &&
       fromMaybe th (rotateRightMaybe =<< rotateLeftMaybe th) == th
+
+prop_insertWithHeightAVLPreservesAVLProperty :: [Int] -> Bool
+prop_insertWithHeightAVLPreservesAVLProperty xs =
+  let steps = scanl (flip insertWithHeightAVL) EmptyTree xs
+   in all isAVL steps
