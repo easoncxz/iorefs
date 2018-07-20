@@ -1,6 +1,6 @@
 module Main where
 
-import QueueTesting
+import QueueBenchmarking
 
 main :: IO ()
 main = benchMain

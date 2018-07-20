@@ -89,7 +89,6 @@ unzipTree (Branch (a, b) l r) =
 emptyTreeHeight :: Int
 emptyTreeHeight = -1
 
--- | Leaf nodes are of height 0
 heightTree :: BinaryTree a -> BinaryTree Int
 heightTree EmptyTree = EmptyTree
 heightTree (Branch n l r) =
