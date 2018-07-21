@@ -26,9 +26,9 @@ asLeftOf t a = Branch a t EmptyTree
 asRightOf :: BinaryTree a -> a -> BinaryTree a
 asRightOf t a = Branch a EmptyTree t
 
-asBranch :: BinaryTree a -> Maybe (a, (BinaryTree a, BinaryTree a))
-asBranch EmptyTree = Nothing
-asBranch (Branch n l r) = Just (n, (l, r))
+node :: BinaryTree a -> Maybe a
+node EmptyTree = Nothing
+node (Branch n _ _) = Just n
 
 inorderTraversal :: BinaryTree a -> [a]
 inorderTraversal EmptyTree = []
@@ -103,8 +103,8 @@ heightTree (Branch _ l r) =
       rt = heightTree r
       h =
         wouldBeHeight
-          (fromMaybe emptyTreeHeight . fmap fst $ asBranch lt)
-          (fromMaybe emptyTreeHeight . fmap fst $ asBranch rt)
+          (fromMaybe emptyTreeHeight (node lt))
+          (fromMaybe emptyTreeHeight (node rt))
    in Branch h lt rt
 
 withHeight :: BinaryTree t -> BinaryTree (t, Int)
