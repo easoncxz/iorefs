@@ -13,34 +13,18 @@ prop_searchProperty xs =
       sorted = List.sort xs
    in inorder == sorted
 
-prop_zipUnzip :: [Int] -> Bool
-prop_zipUnzip xs =
-  let tree = fromList xs
-      heights = heightTree tree
-   in unzipTree (zipTree tree heights) == (tree, heights)
+prop_zipUnzip :: BinaryTree Int -> BinaryTree Int -> Bool
+prop_zipUnzip x y =
+  let zipped = zipTree x y
+   in uncurry zipTree (unzipTree zipped) == zipped
 
-prop_insertWithHeightHomomorphism :: Int -> BinaryTree Int -> Bool
-prop_insertWithHeightHomomorphism x tree =
-  withHeight (insert x tree) == insertWithHeight x (withHeight tree)
-
-prop_subtree :: BinaryTree Int -> Bool
-prop_subtree t =
+prop_subtreesAreSubgraphs :: BinaryTree Int -> Bool
+prop_subtreesAreSubgraphs t =
   case t of
-    EmptyTree -> discard
-    Branch n l r -> l `isSubtreeOf` t && r `isSubtreeOf` t
+    Empty -> discard
+    Branch n l r -> l `isSubgraphOf` t && r `isSubgraphOf` t
 
-prop_zipYieldsSubtrees :: BinaryTree Int -> BinaryTree Char -> Bool
-prop_zipYieldsSubtrees ta tb =
-  let (ta', tb') = unzipTree (zipTree ta tb)
-   in ta' `isSubtreeOf` ta && tb' `isSubtreeOf` tb
-
-prop_rotateBackAndForthAgain :: BinaryTree Int -> Bool
-prop_rotateBackAndForthAgain t =
-  let th = withHeight t
-   in fromMaybe th (rotateLeftMaybe =<< rotateRightMaybe th) == th &&
-      fromMaybe th (rotateRightMaybe =<< rotateLeftMaybe th) == th
-
-prop_insertWithHeightAVLPreservesAVLProperty :: [Int] -> Bool
-prop_insertWithHeightAVLPreservesAVLProperty xs =
-  let steps = scanl (flip insertWithHeightAVL) EmptyTree xs
-   in all isAVL steps
+prop_zipUnzipYieldsSubgraphs :: BinaryTree Int -> BinaryTree Char -> Bool
+prop_zipUnzipYieldsSubgraphs ti tc =
+  let (ti', tc') = unzipTree (zipTree ti tc)
+   in ti' `isSubgraphOf` ti && tc' `isSubgraphOf` tc
