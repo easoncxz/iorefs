@@ -27,7 +27,7 @@ prop_subtree :: BinaryTree Int -> Bool
 prop_subtree t =
   case t of
     EmptyTree -> discard
-    Branch (Node n l r) -> l `isSubtreeOf` t && r `isSubtreeOf` t
+    Branch n l r -> l `isSubtreeOf` t && r `isSubtreeOf` t
 
 prop_zipYieldsSubtrees :: BinaryTree Int -> BinaryTree Char -> Bool
 prop_zipYieldsSubtrees ta tb =
