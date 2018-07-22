@@ -18,22 +18,12 @@ emptyTreeHeight = -1
 wouldBeHeight :: Height -> Height -> Height
 wouldBeHeight l r = 1 + (max l r)
 
-heightTree :: BinaryTree a -> BinaryTree Height
-heightTree Empty = Empty
-heightTree (Branch _ l r) =
-  let lt = heightTree l
-      rt = heightTree r
-      h =
-        wouldBeHeight
-          (fromMaybe emptyTreeHeight (BT.node lt))
-          (fromMaybe emptyTreeHeight (BT.node rt))
-   in Branch h lt rt
-
-withHeight :: BinaryTree a -> BinaryTree (a, Height)
-withHeight t = BT.zipTree t (heightTree t)
-
-fromBinaryTree :: BinaryTree a -> AVLTree a
-fromBinaryTree t = AVLTree (BT.zipTree t (heightTree t))
+heightTree :: BinaryTree a -> BinaryTree Int
+heightTree = snd . BT.foldTree build (emptyTreeHeight, Empty)
+  where
+    build n (lh, lt) (rh, rt) =
+      let h = wouldBeHeight lh rh
+       in (h, Branch h lt rt)
 
 readHeight :: BinaryTree (a, Int) -> Int
 readHeight = fromMaybe emptyTreeHeight . fmap snd . BT.node
@@ -45,6 +35,22 @@ branchWithHeight n l r =
 
 leafWithHeight :: t -> BinaryTree (t, Int)
 leafWithHeight n = branchWithHeight n Empty Empty
+
+treeWithHeight :: BinaryTree a -> BinaryTree (a, Height)
+treeWithHeight = BT.foldTree branchWithHeight Empty
+
+fromBinaryTree :: BinaryTree a -> AVLTree a
+fromBinaryTree = AVLTree . treeWithHeight
+
+empty :: AVLTree a
+empty = AVLTree Empty
+
+branch :: a -> AVLTree a -> AVLTree a -> AVLTree a
+branch n (AVLTree l) (AVLTree r) =
+  AVLTree (Branch (n, wouldBeHeight (readHeight l) (readHeight r)) l r)
+
+leaf :: a -> AVLTree a
+leaf n = branch n empty empty
 
 insertWithHeight :: (Ord a) => a -> BinaryTree (a, Int) -> BinaryTree (a, Int)
 insertWithHeight a Empty = leafWithHeight a
@@ -92,7 +98,7 @@ balanceFactor :: BinaryTree (a, Int) -> Int
 balanceFactor = readBalanceFactor . balance
 
 isAVL :: (Ord a) => BinaryTree a -> Bool
-isAVL t = go (withHeight t)
+isAVL t = go (treeWithHeight t)
   where
     go :: BinaryTree (a, Int) -> Bool
     go Empty = True
