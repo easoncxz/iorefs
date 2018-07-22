@@ -159,5 +159,14 @@ insertWithHeightAVL a (Branch (n, h) l r) =
     then rebalanceOnce (branchWithHeight n (insertWithHeightAVL a l) r)
     else rebalanceOnce (branchWithHeight n l (insertWithHeightAVL a r))
 
-fromListAVL :: (Ord a) => [a] -> BinaryTree (a, Int)
-fromListAVL = List.foldl' (flip insertWithHeightAVL) Empty
+liftBTWithHeight ::
+     (BinaryTree (a, Height) -> BinaryTree (a, Height))
+  -> AVLTree a
+  -> AVLTree a
+liftBTWithHeight f = AVLTree . f . runAVLTree
+
+insert :: (Ord a) => a -> AVLTree a -> AVLTree a
+insert = liftBTWithHeight . insertWithHeightAVL
+
+fromList :: (Ord a) => [a] -> AVLTree a
+fromList = AVLTree . List.foldl' (flip insertWithHeightAVL) Empty
