@@ -38,13 +38,17 @@ prop_searchPropertyStepwise xs =
   let steps = scanr insert Empty xs
    in all prop_searchProperty steps
 
-prop_deleteMaintainsSearchProperty :: [Int] -> Int -> Bool
-prop_deleteMaintainsSearchProperty xs x =
+prop_elem :: [Int] -> Int -> Bool
+prop_elem xs x =
   let tree = fromList xs
-   in case (x `elem` xs, delete x tree) of
-        (False, Nothing) -> True
-        (True, Just small) -> prop_searchProperty small
-        _ -> False
+   in BinaryTree.elem x tree == Prelude.elem x xs
+
+prop_deleteMaintainsSearchProperty :: BinaryTree Int -> Int -> Bool
+prop_deleteMaintainsSearchProperty tree x =
+  case (x `BinaryTree.elem` tree, delete x tree) of
+    (False, Nothing) -> True
+    (True, Just small) -> prop_searchProperty small
+    _ -> False
 
 prop_zipUnzip :: BinaryTree Int -> BinaryTree Int -> Bool
 prop_zipUnzip x y =

@@ -3,7 +3,7 @@ module BinaryTree where
 import Control.Applicative
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
-import Prelude hiding (head, last, tail)
+import Prelude hiding (elem, head, last, tail)
 
 import Test.QuickCheck (Arbitrary(arbitrary), Property, (==>), conjoin, discard)
 
@@ -81,6 +81,14 @@ fromList = List.foldl' (flip insert) Empty
 
 instance (Arbitrary a, Ord a) => Arbitrary (BinaryTree a) where
   arbitrary = fromList <$> arbitrary
+
+elem :: (Ord a) => a -> BinaryTree a -> Bool
+elem _ Empty = False
+elem x (Branch n l r) =
+  case compare x n of
+    LT -> x `elem` l
+    EQ -> True
+    GT -> x `elem` r
 
 popHead :: BinaryTree a -> Maybe (a, BinaryTree a)
 popHead Empty = Nothing
