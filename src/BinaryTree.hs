@@ -82,6 +82,33 @@ fromList = List.foldl' (flip insert) Empty
 instance (Arbitrary a, Ord a) => Arbitrary (BinaryTree a) where
   arbitrary = fromList <$> arbitrary
 
+popHead :: BinaryTree a -> Maybe (a, BinaryTree a)
+popHead Empty = Nothing
+popHead (Branch n l r) = do
+  (v, l') <- popHead l
+  return (v, Branch n l' r)
+
+popLast :: BinaryTree a -> Maybe (a, BinaryTree a)
+popLast Empty = Nothing
+popLast (Branch n l r) = do
+  (v, r') <- popLast r
+  return (v, Branch n l r')
+
+delete :: (Ord a) => a -> BinaryTree a -> Maybe (BinaryTree a)
+delete n Empty = Nothing
+delete x (Branch n l r) =
+  case compare x n of
+    LT -> Branch <$> pure n <*> delete x l <*> pure r
+    EQ ->
+      let collapseRight = do
+            (v, r') <- popHead r
+            return (Branch v l r')
+          collapseLeft = do
+            (v, l') <- popLast l
+            return (Branch v l' r)
+       in collapseRight <|> collapseLeft <|> Just Empty
+    GT -> Branch n l <$> delete x r
+
 zipTree :: BinaryTree a -> BinaryTree b -> BinaryTree (a, b)
 zipTree Empty _ = Empty
 zipTree _ Empty = Empty

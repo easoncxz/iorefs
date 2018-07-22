@@ -4,7 +4,14 @@ import BinaryTree
 
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
-import Test.QuickCheck (discard)
+import Test.QuickCheck
+  ( Gen
+  , NonEmptyList(NonEmpty)
+  , Property
+  , (==>)
+  , discard
+  , elements
+  )
 
 prop_foldTree :: BinaryTree Int -> Bool
 prop_foldTree t = foldTree Branch Empty t == t
@@ -21,12 +28,23 @@ prop_last t =
     Empty -> BinaryTree.last t == Nothing
     _ -> Just (List.last (inorderTraversal t)) == BinaryTree.last t
 
-prop_searchProperty :: [Int] -> Bool
-prop_searchProperty xs =
+prop_searchProperty :: BinaryTree Int -> Bool
+prop_searchProperty tree =
+  let inorder = inorderTraversal tree
+   in inorder == List.sort inorder
+
+prop_searchPropertyStepwise :: [Int] -> Bool
+prop_searchPropertyStepwise xs =
+  let steps = scanr insert Empty xs
+   in all prop_searchProperty steps
+
+prop_deleteMaintainsSearchProperty :: [Int] -> Int -> Bool
+prop_deleteMaintainsSearchProperty xs x =
   let tree = fromList xs
-      inorder = inorderTraversal tree
-      sorted = List.sort xs
-   in inorder == sorted
+   in case (x `elem` xs, delete x tree) of
+        (False, Nothing) -> True
+        (True, Just small) -> prop_searchProperty small
+        _ -> False
 
 prop_zipUnzip :: BinaryTree Int -> BinaryTree Int -> Bool
 prop_zipUnzip x y =
