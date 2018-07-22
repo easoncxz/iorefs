@@ -28,10 +28,7 @@ listAppend2 = go id
 
 -- | Concatenation, using "difference lists"
 diffConcat :: [[a]] -> [a]
-diffConcat = go id
-  where
-    go acc [] = acc []
-    go acc (x:xs) = go (acc . (x ++)) xs
+diffConcat xs = foldr (.) id (fmap (++) xs) []
 
 tell :: String -> String -> String
 tell a b = "(" ++ a ++ " . " ++ b ++ ")"

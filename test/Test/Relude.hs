@@ -20,7 +20,5 @@ prop_myFoldL xs = myFoldL tell "_" xs == foldl tell "_" xs
 prop_myFoldR :: [String] -> Bool
 prop_myFoldR xs = myFoldR tell "_" xs == foldr tell "_" xs
 
-prop_diffConcat :: [[String]] -> Bool
+prop_diffConcat :: [[Int]] -> Bool
 prop_diffConcat ss = diffConcat ss == concat ss
-
-
