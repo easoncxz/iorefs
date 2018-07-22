@@ -1,5 +1,6 @@
 module BinaryTree where
 
+import Control.Applicative
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
 import Prelude hiding (head, last, tail)
@@ -47,14 +48,16 @@ preorderTraversal = foldTree preorder []
     preorder n ls rs = [n] ++ ls ++ rs
 
 head :: BinaryTree a -> Maybe a
-head Empty = Nothing
-head (Branch n Empty _) = Just n
-head (Branch _ l _) = head l
+head = foldTree leftOrSelf Nothing
+  where
+    leftOrSelf :: a -> Maybe a -> Maybe a -> Maybe a
+    leftOrSelf n l _ = l <|> Just n
 
 last :: BinaryTree a -> Maybe a
-last Empty = Nothing
-last (Branch n _ Empty) = Just n
-last (Branch _ _ r) = last r
+last = foldTree rightOrSelf Nothing
+  where
+    rightOrSelf :: a -> Maybe a -> Maybe a -> Maybe a
+    rightOrSelf n _ r = r <|> Just n
 
 rootPrev :: BinaryTree a -> Maybe a
 rootPrev Empty = Nothing

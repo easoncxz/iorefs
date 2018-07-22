@@ -9,6 +9,18 @@ import Test.QuickCheck (discard)
 prop_foldTree :: BinaryTree Int -> Bool
 prop_foldTree t = foldTree Branch Empty t == t
 
+prop_head :: BinaryTree Int -> Bool
+prop_head t =
+  case t of
+    Empty -> BinaryTree.head t == Nothing
+    _ -> Just (List.head (inorderTraversal t)) == BinaryTree.head t
+
+prop_last :: BinaryTree Int -> Bool
+prop_last t =
+  case t of
+    Empty -> BinaryTree.last t == Nothing
+    _ -> Just (List.last (inorderTraversal t)) == BinaryTree.last t
+
 prop_searchProperty :: [Int] -> Bool
 prop_searchProperty xs =
   let tree = fromList xs
