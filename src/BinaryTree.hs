@@ -30,19 +30,21 @@ node :: BinaryTree a -> Maybe a
 node Empty = Nothing
 node (Branch n _ _) = Just n
 
+foldTree :: (a -> z -> z -> z) -> z -> BinaryTree a -> z
+foldTree _ z Empty = z
+foldTree f z (Branch n l r) = f n (foldTree f z l) (foldTree f z r)
+
 inorderTraversal :: BinaryTree a -> [a]
-inorderTraversal Empty = []
-inorderTraversal (Branch n l r) =
-  inorderTraversal l ++ [n] ++ inorderTraversal r
+inorderTraversal = foldTree inorder []
+  where
+    inorder :: a -> [a] -> [a] -> [a]
+    inorder n ls rs = ls ++ [n] ++ rs
 
 preorderTraversal :: BinaryTree a -> [a]
-preorderTraversal Empty = []
-preorderTraversal (Branch n l r) =
-  [n] ++ preorderTraversal l ++ preorderTraversal r
-
--- TODO
-levelOrderTraversal :: BinaryTree a -> [a]
-levelOrderTraversal _ = []
+preorderTraversal = foldTree preorder []
+  where
+    preorder :: a -> [a] -> [a] -> [a]
+    preorder n ls rs = [n] ++ ls ++ rs
 
 head :: BinaryTree a -> Maybe a
 head Empty = Nothing
