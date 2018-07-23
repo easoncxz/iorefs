@@ -44,6 +44,9 @@ treeWithHeight = BT.foldTree branchWithHeight Empty
 treeWithoutHeight :: BinaryTree (a, Height) -> BinaryTree a
 treeWithoutHeight = fmap fst
 
+treeWithNewHeight :: BinaryTree (t, Int) -> BinaryTree (t, Int)
+treeWithNewHeight = BT.foldTree (branchWithHeight . fst) Empty
+
 fromBinaryTree :: BinaryTree a -> AVLTree a
 fromBinaryTree = AVLTree . treeWithHeight
 

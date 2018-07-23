@@ -44,7 +44,31 @@ prop_rotateBackAndForthAgain t =
    in fromMaybe th (rotateLeftMaybe =<< rotateRightMaybe th) == th &&
       fromMaybe th (rotateRightMaybe =<< rotateLeftMaybe th) == th
 
-prop_insertWithHeightAVLPreservesAVLProperty :: [Char] -> Bool
-prop_insertWithHeightAVLPreservesAVLProperty xs =
-  let steps = scanl (flip insertWithHeightAVL) BT.Empty xs
-   in all isAVL steps
+prop_avlTreesAreAVL :: AVLTree Char -> Bool
+prop_avlTreesAreAVL (AVLTree t) = isAVL t
+
+prop_insertWithHeightAVLPreservesSearchProperty :: Char -> AVLTree Char -> Bool
+prop_insertWithHeightAVLPreservesSearchProperty x (AVLTree t) =
+  searchProperty . treeWithoutHeight . insertWithHeightAVL x $ t
+
+prop_insertWithHeightAVLPreservesHeightInvariant :: Char -> AVLTree Char -> Bool
+prop_insertWithHeightAVLPreservesHeightInvariant x (AVLTree t) =
+  let large = insertWithHeightAVL x t
+   in large == treeWithNewHeight large
+
+prop_insertWithHeightAVLPreservesAVLProperty :: Char -> AVLTree Char -> Bool
+prop_insertWithHeightAVLPreservesAVLProperty x (AVLTree t) =
+  isAVL . treeWithoutHeight . insertWithHeightAVL x $ t
+
+prop_deleteWithHeightAVLPreservesSearchProperty :: Char -> AVLTree Char -> Bool
+prop_deleteWithHeightAVLPreservesSearchProperty x (AVLTree t) =
+  fromMaybe True . fmap (searchProperty . treeWithoutHeight) $ deleteWithHeightAVL x t
+
+prop_deleteWithHeightAVLPreservesHeightInvariant :: Char -> AVLTree Char -> Bool
+prop_deleteWithHeightAVLPreservesHeightInvariant x (AVLTree t) =
+  let largeM = deleteWithHeightAVL x t
+   in largeM == fmap treeWithNewHeight largeM
+
+prop_deleteWithHeightAVLPreservesAVLProperty :: Char -> AVLTree Char -> Bool
+prop_deleteWithHeightAVLPreservesAVLProperty x (AVLTree t) =
+  fromMaybe True . fmap (isAVL . treeWithoutHeight) $ deleteWithHeightAVL x t
