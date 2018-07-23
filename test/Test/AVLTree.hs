@@ -4,6 +4,8 @@ import AVLTree
 import BinaryTree (BinaryTree)
 import qualified BinaryTree as BT
 
+import Test.BinaryTree (searchProperty)
+
 import Control.Arrow (first, second)
 import Data.Maybe (fromMaybe)
 
@@ -27,6 +29,14 @@ prop_popLastCommutesWithHeight :: BinaryTree Char -> Bool
 prop_popLastCommutesWithHeight tree =
   fmap (first treeWithHeight) (BT.popLast tree) ==
   fmap (second fst) (popLastWithHeight (treeWithHeight tree))
+
+prop_rotateLeftPreservesSearchProperty :: BinaryTree Char -> Bool
+prop_rotateLeftPreservesSearchProperty t =
+  searchProperty . treeWithoutHeight . rotateLeft . treeWithHeight $ t
+
+prop_rotateRightPreservesSearchProperty :: BinaryTree Char -> Bool
+prop_rotateRightPreservesSearchProperty t =
+  searchProperty . treeWithoutHeight . rotateRight . treeWithHeight $ t
 
 prop_rotateBackAndForthAgain :: BinaryTree Char -> Bool
 prop_rotateBackAndForthAgain t =

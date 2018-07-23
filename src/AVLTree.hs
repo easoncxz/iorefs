@@ -8,6 +8,8 @@ import Control.Arrow (first, second)
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
 
+import Test.QuickCheck (Arbitrary, arbitrary)
+
 type Height = Int
 
 newtype AVLTree a = AVLTree
@@ -38,6 +40,9 @@ leafWithHeight n = branchWithHeight n Empty Empty
 
 treeWithHeight :: BinaryTree a -> BinaryTree (a, Height)
 treeWithHeight = BT.foldTree branchWithHeight Empty
+
+treeWithoutHeight :: BinaryTree (a, Height) -> BinaryTree a
+treeWithoutHeight = fmap fst
 
 fromBinaryTree :: BinaryTree a -> AVLTree a
 fromBinaryTree = AVLTree . treeWithHeight
@@ -190,11 +195,14 @@ deleteWithHeightAVL x (Branch (n, _) l r) =
        in deleteR <|> deleteL <|> Just Empty
     GT -> branchWithHeight n l <$> deleteWithHeightAVL x r
 
-liftBTWithHeight :: (BinaryTree (a, Height) -> BinaryTree (a, Height)) -> AVLTree a -> AVLTree a
-liftBTWithHeight f = AVLTree . f . runAVLTree
+liftBT :: (BinaryTree (a, Height) -> BinaryTree (a, Height)) -> AVLTree a -> AVLTree a
+liftBT f = AVLTree . f . runAVLTree
 
 insert :: (Ord a) => a -> AVLTree a -> AVLTree a
-insert = liftBTWithHeight . insertWithHeightAVL
+insert = liftBT . insertWithHeightAVL
 
 fromList :: (Ord a) => [a] -> AVLTree a
 fromList = AVLTree . List.foldl' (flip insertWithHeightAVL) Empty
+
+instance (Arbitrary a, Ord a) => Arbitrary (AVLTree a) where
+  arbitrary = fromList <$> arbitrary
