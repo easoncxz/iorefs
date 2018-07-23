@@ -104,13 +104,9 @@ delete x (Branch n l r) =
   case compare x n of
     LT -> Branch <$> pure n <*> delete x l <*> pure r
     EQ ->
-      let collapseRight = do
-            (v, r') <- popHead r
-            return (Branch v l r')
-          collapseLeft = do
-            (v, l') <- popLast l
-            return (Branch v l' r)
-       in collapseRight <|> collapseLeft <|> Just Empty
+      let deleteR = (\(rMin, r') -> Branch rMin l r') <$> popHead r
+          deleteL = (\(lMax, l') -> Branch lMax l' r) <$> popLast l
+       in deleteR <|> deleteL <|> Just Empty
     GT -> Branch n l <$> delete x r
 
 zipTree :: BinaryTree a -> BinaryTree b -> BinaryTree (a, b)
