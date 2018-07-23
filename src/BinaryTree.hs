@@ -1,7 +1,7 @@
 module BinaryTree where
 
-import Control.Arrow (first, second)
 import Control.Applicative
+import Control.Arrow (first, second)
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
 import Prelude hiding (elem, head, last, tail)
@@ -31,6 +31,13 @@ asRightOf t a = Branch a Empty t
 node :: BinaryTree a -> Maybe a
 node Empty = Nothing
 node (Branch n _ _) = Just n
+
+type TreeAlgebra a z = (z, a -> z -> z -> z)
+
+type IdTreeAlgebra a = TreeAlgebra a (BinaryTree a)
+
+idTreeAlgebra :: IdTreeAlgebra a
+idTreeAlgebra = (Empty, Branch)
 
 foldTree :: (a -> z -> z -> z) -> z -> BinaryTree a -> z
 foldTree _ z Empty = z
@@ -78,12 +85,15 @@ rootNext Empty = Nothing
 rootNext (Branch _ _ Empty) = Nothing
 rootNext (Branch _ _ r) = head r
 
+abstractInsert :: (Ord a) => TreeAlgebra a z -> a -> BinaryTree a -> z
+abstractInsert (empty, branch) x Empty = branch x empty empty
+abstractInsert (empty, branch) x (Branch n l r) =
+  if x < n
+    then branch n (abstractInsert (empty, branch) x l) (foldTree branch empty r)
+    else branch n (foldTree branch empty l) (abstractInsert (empty, branch) x r)
+
 insert :: (Ord a) => a -> BinaryTree a -> BinaryTree a
-insert a Empty = leaf a
-insert a (Branch n l r) =
-  if a < n
-    then Branch n (insert a l) r
-    else Branch n l (insert a r)
+insert = abstractInsert idTreeAlgebra
 
 fromList :: (Ord a) => [a] -> BinaryTree a
 fromList = List.foldl' (flip insert) Empty

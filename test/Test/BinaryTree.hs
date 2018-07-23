@@ -61,6 +61,16 @@ prop_elem xs x =
   let tree = fromList xs
    in BinaryTree.elem x tree == Prelude.elem x xs
 
+prop_abstractInsertImplementsOldInsert :: Char -> BinaryTree Char -> Bool
+prop_abstractInsertImplementsOldInsert c t = insert c t == oldInsert c t
+  where
+    oldInsert :: (Ord a) => a -> BinaryTree a -> BinaryTree a
+    oldInsert a Empty = leaf a
+    oldInsert a (Branch n l r) =
+      if a < n
+        then Branch n (oldInsert a l) r
+        else Branch n l (oldInsert a r)
+
 prop_insertMaintainsSearchProperty :: Char -> BinaryTree Char -> Bool
 prop_insertMaintainsSearchProperty x t = searchProperty (insert x t)
 
