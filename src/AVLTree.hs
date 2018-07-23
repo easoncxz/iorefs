@@ -72,10 +72,22 @@ popHeadWithHeight Empty = Nothing
 popHeadWithHeight (Branch (n, h) l r) =
   (fmap . second) (\l' -> branchWithHeight n l' r) (popHeadWithHeight l) <|> Just ((n, h), r)
 
+popHeadWithHeightAVL :: BinaryTree (a, Int) -> Maybe ((a, Int), BinaryTree (a, Int))
+popHeadWithHeightAVL Empty = Nothing
+popHeadWithHeightAVL (Branch (n, h) l r) =
+  (fmap . second) (\l' -> rebalanceOnce (branchWithHeight n l' r)) (popHeadWithHeightAVL l) <|>
+  Just ((n, h), r)
+
 popLastWithHeight :: BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int), (a, Int))
 popLastWithHeight Empty = Nothing
 popLastWithHeight (Branch (n, h) l r) =
   (fmap . first) (\r' -> branchWithHeight n l r') (popLastWithHeight r) <|> Just (l, (n, h))
+
+popLastWithHeightAVL :: BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int), (a, Int))
+popLastWithHeightAVL Empty = Nothing
+popLastWithHeightAVL (Branch (n, h) l r) =
+  (fmap . first) (\r' -> rebalanceOnce (branchWithHeight n l r')) (popLastWithHeightAVL r) <|>
+  Just (l, (n, h))
 
 deleteWithHeight :: (Ord a) => a -> BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int))
 deleteWithHeight _ Empty = Nothing
@@ -193,8 +205,8 @@ deleteWithHeightAVL x (Branch (n, _) l r) =
   case compare x n of
     LT -> branchWithHeight <$> pure n <*> deleteWithHeightAVL x l <*> pure r
     EQ ->
-      let deleteR = (\((rMin, _), r') -> branchWithHeight rMin l r') <$> popHeadWithHeight r
-          deleteL = (\(l', (lMax, _)) -> branchWithHeight lMax l' r) <$> popLastWithHeight l
+      let deleteR = (\((rMin, _), r') -> branchWithHeight rMin l r') <$> popHeadWithHeightAVL r
+          deleteL = (\(l', (lMax, _)) -> branchWithHeight lMax l' r) <$> popLastWithHeightAVL l
        in deleteR <|> deleteL <|> Just Empty
     GT -> branchWithHeight n l <$> deleteWithHeightAVL x r
 

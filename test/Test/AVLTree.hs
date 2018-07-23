@@ -25,10 +25,22 @@ prop_popHeadCommutesWithHeight tree =
   fmap (second treeWithHeight) (BT.popHead tree) ==
   fmap (first fst) (popHeadWithHeight (treeWithHeight tree))
 
+prop_popHeadWithHeightAVLPreservesAVL :: AVLTree Char -> Bool
+prop_popHeadWithHeightAVLPreservesAVL (AVLTree t) =
+  case popHeadWithHeightAVL t of
+    Nothing -> True
+    Just (_, t') -> isAVL (treeWithoutHeight t')
+
 prop_popLastCommutesWithHeight :: BinaryTree Char -> Bool
 prop_popLastCommutesWithHeight tree =
   fmap (first treeWithHeight) (BT.popLast tree) ==
   fmap (second fst) (popLastWithHeight (treeWithHeight tree))
+
+prop_popLastWithHeightAVLPreservesAVL :: AVLTree Char -> Bool
+prop_popLastWithHeightAVLPreservesAVL (AVLTree t) =
+  case popLastWithHeightAVL t of
+    Nothing -> True
+    Just (t', _) -> isAVL (treeWithoutHeight t')
 
 prop_rotateLeftPreservesSearchProperty :: BinaryTree Char -> Bool
 prop_rotateLeftPreservesSearchProperty t =
