@@ -61,6 +61,9 @@ prop_elem xs x =
   let tree = fromList xs
    in BinaryTree.elem x tree == Prelude.elem x xs
 
+prop_insertMaintainsSearchProperty :: Char -> BinaryTree Char -> Bool
+prop_insertMaintainsSearchProperty x t = searchProperty (insert x t)
+
 prop_deleteMaintainsSearchProperty :: BinaryTree Char -> Char -> Bool
 prop_deleteMaintainsSearchProperty tree x =
   case (x `BinaryTree.elem` tree, delete x tree) of
