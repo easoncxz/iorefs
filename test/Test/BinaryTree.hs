@@ -2,16 +2,14 @@ module Test.BinaryTree where
 
 import BinaryTree
 
+import Control.Arrow (second)
+import Data.Foldable (toList)
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
-import Test.QuickCheck
-  ( Gen
-  , NonEmptyList(NonEmpty)
-  , Property
-  , (==>)
-  , discard
-  , elements
-  )
+import qualified Data.Sequence as Seq
+import qualified Data.Tuple as Tuple
+import Safe (tailMay)
+import Test.QuickCheck (Gen, NonEmptyList(NonEmpty), Property, (==>), discard, elements)
 
 prop_foldTree :: BinaryTree Int -> Bool
 prop_foldTree t = foldTree Branch Empty t == t
@@ -27,6 +25,20 @@ prop_last t =
   case t of
     Empty -> BinaryTree.last t == Nothing
     _ -> Just (List.last (inorderTraversal t)) == BinaryTree.last t
+
+prop_popHead :: BinaryTree Int -> Bool
+prop_popHead tree =
+  fmap (second inorderTraversal) (popHead tree) == List.uncons (inorderTraversal tree)
+
+unsnoc :: [a] -> Maybe ([a], a)
+unsnoc xs =
+  case Seq.fromList xs of
+    Seq.Empty -> Nothing
+    init Seq.:|> last -> Just (toList init, last)
+
+prop_popLast :: BinaryTree Int -> Bool
+prop_popLast tree =
+  fmap (Tuple.swap . second inorderTraversal) (popLast tree) == unsnoc (inorderTraversal tree)
 
 prop_searchProperty :: BinaryTree Int -> Bool
 prop_searchProperty tree =
@@ -68,16 +80,14 @@ prop_zipUnzipYieldsSubgraphs ti tc =
 
 inorderTraversal' :: BinaryTree a -> [a]
 inorderTraversal' Empty = []
-inorderTraversal' (Branch n l r) =
-  inorderTraversal' l ++ [n] ++ inorderTraversal' r
+inorderTraversal' (Branch n l r) = inorderTraversal' l ++ [n] ++ inorderTraversal' r
 
 prop_inorderTraversal :: BinaryTree Int -> Bool
 prop_inorderTraversal t = inorderTraversal t == inorderTraversal' t
 
 preorderTraversal' :: BinaryTree a -> [a]
 preorderTraversal' Empty = []
-preorderTraversal' (Branch n l r) =
-  [n] ++ preorderTraversal' l ++ preorderTraversal' r
+preorderTraversal' (Branch n l r) = [n] ++ preorderTraversal' l ++ preorderTraversal' r
 
 prop_preorderTraversal :: BinaryTree Int -> Bool
 prop_preorderTraversal t = preorderTraversal t == preorderTraversal' t

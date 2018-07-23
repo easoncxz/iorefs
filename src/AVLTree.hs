@@ -60,15 +60,13 @@ insertWithHeight a (Branch (n, h) l r) =
 
 popHeadWithHeight :: BinaryTree (a, Int) -> Maybe ((a, Int), BinaryTree (a, Int))
 popHeadWithHeight Empty = Nothing
-popHeadWithHeight (Branch (n, _) l r) = do
-  (pair, l') <- popHeadWithHeight l
-  return (pair, branchWithHeight n l' r)
+popHeadWithHeight (Branch (n, h) l r) =
+  (fmap . fmap) (\l' -> branchWithHeight n l' r) (popHeadWithHeight l) <|> Just ((n, h), r)
 
 popLastWithHeight :: BinaryTree (a, Int) -> Maybe ((a, Int), BinaryTree (a, Int))
 popLastWithHeight Empty = Nothing
-popLastWithHeight (Branch (n, _) l r) = do
-  (pair, r') <- popLastWithHeight r
-  return (pair, branchWithHeight n l r')
+popLastWithHeight (Branch (n, h) l r) =
+  (fmap . fmap) (\r' -> branchWithHeight n l r') (popLastWithHeight r) <|> Just ((n, h), l)
 
 deleteWithHeight :: (Ord a) => a -> BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int))
 deleteWithHeight _ Empty = Nothing

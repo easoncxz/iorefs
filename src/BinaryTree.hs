@@ -92,15 +92,11 @@ elem x (Branch n l r) =
 
 popHead :: BinaryTree a -> Maybe (a, BinaryTree a)
 popHead Empty = Nothing
-popHead (Branch n l r) = do
-  (v, l') <- popHead l
-  return (v, Branch n l' r)
+popHead (Branch n l r) = (fmap . fmap) (\l' -> Branch n l' r) (popHead l) <|> Just (n, r)
 
 popLast :: BinaryTree a -> Maybe (a, BinaryTree a)
 popLast Empty = Nothing
-popLast (Branch n l r) = do
-  (v, r') <- popLast r
-  return (v, Branch n l r')
+popLast (Branch n l r) = (fmap . fmap) (\r' -> Branch n l r') (popLast r) <|> Just (n, l)
 
 delete :: (Ord a) => a -> BinaryTree a -> Maybe (BinaryTree a)
 delete n Empty = Nothing
@@ -120,8 +116,7 @@ delete x (Branch n l r) =
 zipTree :: BinaryTree a -> BinaryTree b -> BinaryTree (a, b)
 zipTree Empty _ = Empty
 zipTree _ Empty = Empty
-zipTree (Branch a al ar) (Branch b bl br) =
-  Branch (a, b) (zipTree al bl) (zipTree ar br)
+zipTree (Branch a al ar) (Branch b bl br) = Branch (a, b) (zipTree al bl) (zipTree ar br)
 
 unzipTree :: BinaryTree (a, b) -> (BinaryTree a, BinaryTree b)
 unzipTree Empty = (Empty, Empty)
