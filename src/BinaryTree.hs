@@ -1,5 +1,6 @@
 module BinaryTree where
 
+import Control.Arrow (first, second)
 import Control.Applicative
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
@@ -59,6 +60,14 @@ last = foldTree rightOrSelf Nothing
     rightOrSelf :: a -> Maybe a -> Maybe a -> Maybe a
     rightOrSelf n _ r = r <|> Just n
 
+popHead :: BinaryTree a -> Maybe (a, BinaryTree a)
+popHead Empty = Nothing
+popHead (Branch n l r) = (fmap . second) (\l' -> Branch n l' r) (popHead l) <|> Just (n, r)
+
+popLast :: BinaryTree a -> Maybe (BinaryTree a, a)
+popLast Empty = Nothing
+popLast (Branch n l r) = (fmap . first) (\r' -> Branch n l r') (popLast r) <|> Just (l, n)
+
 rootPrev :: BinaryTree a -> Maybe a
 rootPrev Empty = Nothing
 rootPrev (Branch _ Empty _) = Nothing
@@ -90,14 +99,6 @@ elem x (Branch n l r) =
     EQ -> True
     GT -> x `elem` r
 
-popHead :: BinaryTree a -> Maybe (a, BinaryTree a)
-popHead Empty = Nothing
-popHead (Branch n l r) = (fmap . fmap) (\l' -> Branch n l' r) (popHead l) <|> Just (n, r)
-
-popLast :: BinaryTree a -> Maybe (a, BinaryTree a)
-popLast Empty = Nothing
-popLast (Branch n l r) = (fmap . fmap) (\r' -> Branch n l r') (popLast r) <|> Just (n, l)
-
 delete :: (Ord a) => a -> BinaryTree a -> Maybe (BinaryTree a)
 delete n Empty = Nothing
 delete x (Branch n l r) =
@@ -105,7 +106,7 @@ delete x (Branch n l r) =
     LT -> Branch <$> pure n <*> delete x l <*> pure r
     EQ ->
       let deleteR = (\(rMin, r') -> Branch rMin l r') <$> popHead r
-          deleteL = (\(lMax, l') -> Branch lMax l' r) <$> popLast l
+          deleteL = (\(l', lMax) -> Branch lMax l' r) <$> popLast l
        in deleteR <|> deleteL <|> Just Empty
     GT -> Branch n l <$> delete x r
 

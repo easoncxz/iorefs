@@ -4,6 +4,7 @@ import BinaryTree (BinaryTree(Branch, Empty))
 import qualified BinaryTree as BT
 
 import Control.Applicative ((<|>))
+import Control.Arrow (first, second)
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
 
@@ -61,12 +62,12 @@ insertWithHeight a (Branch (n, h) l r) =
 popHeadWithHeight :: BinaryTree (a, Int) -> Maybe ((a, Int), BinaryTree (a, Int))
 popHeadWithHeight Empty = Nothing
 popHeadWithHeight (Branch (n, h) l r) =
-  (fmap . fmap) (\l' -> branchWithHeight n l' r) (popHeadWithHeight l) <|> Just ((n, h), r)
+  (fmap . second) (\l' -> branchWithHeight n l' r) (popHeadWithHeight l) <|> Just ((n, h), r)
 
-popLastWithHeight :: BinaryTree (a, Int) -> Maybe ((a, Int), BinaryTree (a, Int))
+popLastWithHeight :: BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int), (a, Int))
 popLastWithHeight Empty = Nothing
 popLastWithHeight (Branch (n, h) l r) =
-  (fmap . fmap) (\r' -> branchWithHeight n l r') (popLastWithHeight r) <|> Just ((n, h), l)
+  (fmap . first) (\r' -> branchWithHeight n l r') (popLastWithHeight r) <|> Just (l, (n, h))
 
 deleteWithHeight :: (Ord a) => a -> BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int))
 deleteWithHeight _ Empty = Nothing
@@ -75,7 +76,7 @@ deleteWithHeight x (Branch (n, _) l r) =
     LT -> branchWithHeight <$> pure n <*> deleteWithHeight x l <*> pure r
     EQ ->
       let fromR = (\((rMin, _), r') -> branchWithHeight rMin l r') <$> popHeadWithHeight r
-          fromL = (\((lMax, _), l') -> branchWithHeight lMax l' r) <$> popLastWithHeight l
+          fromL = (\(l', (lMax, _)) -> branchWithHeight lMax l' r) <$> popLastWithHeight l
        in fromR <|> fromL <|> Just Empty
     GT -> branchWithHeight n l <$> deleteWithHeight x r
 
@@ -185,7 +186,7 @@ deleteWithHeightAVL x (Branch (n, _) l r) =
     LT -> branchWithHeight <$> pure n <*> deleteWithHeightAVL x l <*> pure r
     EQ ->
       let deleteR = (\((rMin, _), r') -> branchWithHeight rMin l r') <$> popHeadWithHeight r
-          deleteL = (\((lMax, _), l') -> branchWithHeight lMax l' r) <$> popLastWithHeight l
+          deleteL = (\(l', (lMax, _)) -> branchWithHeight lMax l' r) <$> popLastWithHeight l
        in deleteR <|> deleteL <|> Just Empty
     GT -> branchWithHeight n l <$> deleteWithHeightAVL x r
 

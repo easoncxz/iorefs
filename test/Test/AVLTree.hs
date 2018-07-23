@@ -25,8 +25,8 @@ prop_popHeadWithHeightPreservesHeightInvariant tree =
 
 prop_popLastWithHeightPreservesHeightInvariant :: BinaryTree Char -> Bool
 prop_popLastWithHeightPreservesHeightInvariant tree =
-  fmap (second treeWithHeight) (BT.popLast tree) ==
-  fmap (first fst) (popLastWithHeight (treeWithHeight tree))
+  fmap (first treeWithHeight) (BT.popLast tree) ==
+  fmap (second fst) (popLastWithHeight (treeWithHeight tree))
 
 prop_rotateBackAndForthAgain :: BinaryTree Char -> Bool
 prop_rotateBackAndForthAgain t =
