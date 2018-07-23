@@ -10,17 +10,21 @@ import Data.Maybe (fromMaybe)
 prop_withHeightZipVsFold :: BinaryTree Char -> Bool
 prop_withHeightZipVsFold t = BT.zipTree t (heightTree t) == treeWithHeight t
 
-prop_insertCommutesWithWithHeight :: Char -> BinaryTree Char -> Bool
-prop_insertCommutesWithWithHeight x tree =
+prop_insertWithHeightPreservesHeightInvariant :: Char -> BinaryTree Char -> Bool
+prop_insertWithHeightPreservesHeightInvariant x tree =
   treeWithHeight (BT.insert x tree) == insertWithHeight x (treeWithHeight tree)
 
-prop_popHeadCommutesWithWithHeight :: BinaryTree Char -> Bool
-prop_popHeadCommutesWithWithHeight tree =
+prop_deleteWithHeightPreservesHeightInvariant :: Char -> BinaryTree Char -> Bool
+prop_deleteWithHeightPreservesHeightInvariant x tree =
+  fmap treeWithHeight (BT.delete x tree) == deleteWithHeight x (treeWithHeight tree)
+
+prop_popHeadWithHeightPreservesHeightInvariant :: BinaryTree Char -> Bool
+prop_popHeadWithHeightPreservesHeightInvariant tree =
   fmap (second treeWithHeight) (BT.popHead tree) ==
   fmap (first fst) (popHeadWithHeight (treeWithHeight tree))
 
-prop_popLastCommutesWithWithHeight :: BinaryTree Char -> Bool
-prop_popLastCommutesWithWithHeight tree =
+prop_popLastWithHeightPreservesHeightInvariant :: BinaryTree Char -> Bool
+prop_popLastWithHeightPreservesHeightInvariant tree =
   fmap (second treeWithHeight) (BT.popLast tree) ==
   fmap (first fst) (popLastWithHeight (treeWithHeight tree))
 

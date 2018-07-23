@@ -74,13 +74,9 @@ deleteWithHeight x (Branch (n, _) l r) =
   case compare x n of
     LT -> branchWithHeight <$> pure n <*> deleteWithHeight x l <*> pure r
     EQ ->
-      let collapseRight = do
-            (pair, r') <- popHeadWithHeight r
-            return (branchWithHeight n l r')
-          collapseLeft = do
-            (pair, l') <- popLastWithHeight l
-            return (branchWithHeight n l' r)
-       in collapseRight <|> collapseLeft <|> Just Empty
+      let fromR = (\((rMin, _), r') -> branchWithHeight rMin l r') <$> popHeadWithHeight r
+          fromL = (\((lMax, _), l') -> branchWithHeight lMax l' r) <$> popLastWithHeight l
+       in fromR <|> fromL <|> Just Empty
     GT -> branchWithHeight n l <$> deleteWithHeight x r
 
 newtype BalanceFactor = BalanceFactor
@@ -180,6 +176,18 @@ insertWithHeightAVL a (Branch (n, h) l r) =
   if a < n
     then branchWithHeight n (insertWithHeightAVL a l) r
     else branchWithHeight n l (insertWithHeightAVL a r)
+
+deleteWithHeightAVL :: (Ord a) => a -> BinaryTree (a, Int) -> Maybe (BinaryTree (a, Int))
+deleteWithHeightAVL _ Empty = Nothing
+deleteWithHeightAVL x (Branch (n, _) l r) =
+  rebalanceOnce <$>
+  case compare x n of
+    LT -> branchWithHeight <$> pure n <*> deleteWithHeightAVL x l <*> pure r
+    EQ ->
+      let deleteR = (\((rMin, _), r') -> branchWithHeight rMin l r') <$> popHeadWithHeight r
+          deleteL = (\((lMax, _), l') -> branchWithHeight lMax l' r) <$> popLastWithHeight l
+       in deleteR <|> deleteL <|> Just Empty
+    GT -> branchWithHeight n l <$> deleteWithHeightAVL x r
 
 liftBTWithHeight :: (BinaryTree (a, Height) -> BinaryTree (a, Height)) -> AVLTree a -> AVLTree a
 liftBTWithHeight f = AVLTree . f . runAVLTree
