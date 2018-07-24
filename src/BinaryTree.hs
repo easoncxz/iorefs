@@ -120,10 +120,14 @@ delete x (Branch n l r) =
        in deleteR <|> deleteL <|> Just Empty
     GT -> Branch n l <$> delete x r
 
+zipTreeWith :: (a -> b -> c) -> BinaryTree a -> BinaryTree b -> BinaryTree c
+zipTreeWith _ Empty _ = Empty
+zipTreeWith _ _ Empty = Empty
+zipTreeWith f (Branch a al ar) (Branch b bl br) =
+  Branch (f a b) (zipTreeWith f al bl) (zipTreeWith f ar br)
+
 zipTree :: BinaryTree a -> BinaryTree b -> BinaryTree (a, b)
-zipTree Empty _ = Empty
-zipTree _ Empty = Empty
-zipTree (Branch a al ar) (Branch b bl br) = Branch (a, b) (zipTree al bl) (zipTree ar br)
+zipTree = zipTreeWith (,)
 
 unzipTree :: BinaryTree (a, b) -> (BinaryTree a, BinaryTree b)
 unzipTree Empty = (Empty, Empty)
