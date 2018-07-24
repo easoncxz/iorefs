@@ -158,3 +158,25 @@ isSubgraphOf (Branch _ _ _) Empty = False
 isSubgraphOf a@(Branch an al ar) b@(Branch bn bl br) =
   an == bn && al `isSubgraphOf` bl && ar `isSubgraphOf` br ||
   a `isSubgraphOf` bl || a `isSubgraphOf` br
+
+abstractRotateLeftMaybe :: BranchCons a (BinaryTree a) -> BinaryTree a -> Maybe (BinaryTree a)
+abstractRotateLeftMaybe branch (Branch pn pl (Branch cn cl cr)) =
+  Just (branch cn (branch pn pl cl) cr)
+abstractRotateLeftMaybe _ _ = Nothing
+
+rotateLeftMaybe :: BinaryTree a -> Maybe (BinaryTree a)
+rotateLeftMaybe = abstractRotateLeftMaybe Branch
+
+rotateLeft :: BinaryTree a -> BinaryTree a
+rotateLeft t = fromMaybe t (rotateLeftMaybe t)
+
+abstractRotateRightMaybe :: BranchCons a (BinaryTree a) -> BinaryTree a -> Maybe (BinaryTree a)
+abstractRotateRightMaybe branch (Branch pn (Branch cn cl cr) pr) =
+  Just (branch cn cl (branch pn cr pr))
+abstractRotateRightMaybe _ _ = Nothing
+
+rotateRightMaybe :: BinaryTree a -> Maybe (BinaryTree a)
+rotateRightMaybe = abstractRotateRightMaybe Branch
+
+rotateRight :: BinaryTree a -> BinaryTree a
+rotateRight t = fromMaybe t (rotateRightMaybe t)

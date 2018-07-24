@@ -110,3 +110,14 @@ preorderTraversal' (Branch n l r) = [n] ++ preorderTraversal' l ++ preorderTrave
 
 prop_preorderTraversal :: BinaryTree Int -> Bool
 prop_preorderTraversal t = preorderTraversal t == preorderTraversal' t
+
+prop_rotateLeftPreservesSearchProperty :: BinaryTree Char -> Bool
+prop_rotateLeftPreservesSearchProperty t = searchProperty (rotateLeft t)
+
+prop_rotateRightPreservesSearchProperty :: BinaryTree Char -> Bool
+prop_rotateRightPreservesSearchProperty t = searchProperty (rotateRight t)
+
+prop_rotateBackAndForthAgain :: BinaryTree Char -> Bool
+prop_rotateBackAndForthAgain t =
+  fromMaybe t (rotateLeftMaybe =<< rotateRightMaybe t) == t &&
+  fromMaybe t (rotateRightMaybe =<< rotateLeftMaybe t) == t

@@ -59,9 +59,6 @@ withHeightAlgebra = (Empty, branchWithNewHeight)
 withHeightAndRebalancingAlgebra :: TreeAlgebra (WithHeight a) (BinaryTree (WithHeight a))
 withHeightAndRebalancingAlgebra = (Empty, branchWithNewHeightAndRebalancing)
 
-leafWithNewHeight :: WithHeight t -> BinaryTree (WithHeight t)
-leafWithNewHeight n = branchWithNewHeight n Empty Empty
-
 treeWithHeight :: BinaryTree a -> BinaryTree (WithHeight a)
 treeWithHeight = BT.foldTree branchWithHeight Empty
 
@@ -150,24 +147,20 @@ isAVL t = go (treeWithHeight t)
     nodeAdmissable t = balanceFactor t `elem` [-1 .. 1]
 
 rotateLeftMaybe :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
-rotateLeftMaybe (Branch pn pl (Branch cn cl cr)) =
-  Just (branchWithNewHeight cn (branchWithNewHeight pn pl cl) cr)
-rotateLeftMaybe _ = Nothing
+rotateLeftMaybe = BT.abstractRotateLeftMaybe branchWithNewHeight
 
 rotateLeft :: BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
 rotateLeft t = fromMaybe t (rotateLeftMaybe t)
 
 rotateRightMaybe :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
-rotateRightMaybe (Branch pn (Branch cn cl cr) pr) =
-  Just (branchWithNewHeight cn cl (branchWithNewHeight pn cr pr))
-rotateRightMaybe _ = Nothing
+rotateRightMaybe = BT.abstractRotateRightMaybe branchWithNewHeight
 
 rotateRight :: BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
 rotateRight t = fromMaybe t (rotateRightMaybe t)
 
 rebalanceOnce :: BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
 rebalanceOnce Empty = Empty
-rebalanceOnce p@(Branch (WithHeight ph pn) pl pr) =
+rebalanceOnce p@(Branch (WithHeight _ pn) pl pr) =
   case balance p of
     LeftTaller f ln ll lr
       | f > 1 ->
