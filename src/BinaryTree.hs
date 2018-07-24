@@ -32,7 +32,11 @@ node :: BinaryTree a -> Maybe a
 node Empty = Nothing
 node (Branch n _ _) = Just n
 
-type TreeAlgebra a z = (z, a -> z -> z -> z)
+type EmptyCons z = z
+
+type BranchCons a z = a -> z -> z -> z
+
+type TreeAlgebra a z = (EmptyCons z, BranchCons a z)
 
 type IdTreeAlgebra a = TreeAlgebra a (BinaryTree a)
 
@@ -67,13 +71,21 @@ last = foldTree rightOrSelf Nothing
     rightOrSelf :: a -> Maybe a -> Maybe a -> Maybe a
     rightOrSelf n _ r = r <|> Just n
 
+abstractPopHead :: BranchCons a (BinaryTree a) -> BinaryTree a -> Maybe (a, BinaryTree a)
+abstractPopHead _ Empty = Nothing
+abstractPopHead branch (Branch n l r) =
+  (fmap . second) (\l' -> branch n l' r) (abstractPopHead branch l) <|> Just (n, r)
+
 popHead :: BinaryTree a -> Maybe (a, BinaryTree a)
-popHead Empty = Nothing
-popHead (Branch n l r) = (fmap . second) (\l' -> Branch n l' r) (popHead l) <|> Just (n, r)
+popHead = abstractPopHead Branch
+
+abstractPopLast :: BranchCons a (BinaryTree a) -> BinaryTree a -> Maybe (BinaryTree a, a)
+abstractPopLast _ Empty = Nothing
+abstractPopLast branch (Branch n l r) =
+  (fmap . first) (\r' -> branch n l r') (abstractPopLast branch r) <|> Just (l, n)
 
 popLast :: BinaryTree a -> Maybe (BinaryTree a, a)
-popLast Empty = Nothing
-popLast (Branch n l r) = (fmap . first) (\r' -> Branch n l r') (popLast r) <|> Just (l, n)
+popLast = abstractPopLast Branch
 
 rootPrev :: BinaryTree a -> Maybe a
 rootPrev Empty = Nothing

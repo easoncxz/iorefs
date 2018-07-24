@@ -1,6 +1,6 @@
 module AVLTree where
 
-import BinaryTree (BinaryTree(Branch, Empty))
+import BinaryTree (BinaryTree(Branch, Empty), BranchCons, EmptyCons, TreeAlgebra)
 import qualified BinaryTree as BT
 
 import Control.Applicative ((<|>))
@@ -47,11 +47,7 @@ branchWithHeight n l r =
   let h = wouldBeHeight (readHeight l) (readHeight r)
    in Branch (WithHeight h n) l r
 
-branchWithNewHeight ::
-     WithHeight t
-  -> BinaryTree (WithHeight t)
-  -> BinaryTree (WithHeight t)
-  -> BinaryTree (WithHeight t)
+branchWithNewHeight :: BranchCons (WithHeight a) (BinaryTree (WithHeight a))
 branchWithNewHeight = branchWithHeight . whValue
 
 leafWithNewHeight :: WithHeight t -> BinaryTree (WithHeight t)
@@ -89,9 +85,7 @@ insertWithHeight a (Branch n l r) =
     else branchWithNewHeight n l (insertWithHeight a r)
 
 popHeadWithHeight :: BinaryTree (WithHeight a) -> Maybe (WithHeight a, BinaryTree (WithHeight a))
-popHeadWithHeight Empty = Nothing
-popHeadWithHeight (Branch n l r) =
-  (fmap . second) (\l' -> branchWithNewHeight n l' r) (popHeadWithHeight l) <|> Just (n, r)
+popHeadWithHeight = BT.abstractPopHead branchWithNewHeight
 
 popHeadWithHeightAVL :: BinaryTree (WithHeight a) -> Maybe (WithHeight a, BinaryTree (WithHeight a))
 popHeadWithHeightAVL Empty = Nothing
@@ -100,9 +94,7 @@ popHeadWithHeightAVL (Branch n l r) =
   Just (n, r)
 
 popLastWithHeight :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a), WithHeight a)
-popLastWithHeight Empty = Nothing
-popLastWithHeight (Branch n l r) =
-  (fmap . first) (\r' -> branchWithNewHeight n l r') (popLastWithHeight r) <|> Just (l, n)
+popLastWithHeight = BT.abstractPopLast branchWithNewHeight
 
 popLastWithHeightAVL :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a), WithHeight a)
 popLastWithHeightAVL Empty = Nothing
