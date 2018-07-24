@@ -121,16 +121,20 @@ elem x (Branch n l r) =
     EQ -> True
     GT -> x `elem` r
 
-delete :: (Ord a) => a -> BinaryTree a -> Maybe (BinaryTree a)
-delete n Empty = Nothing
-delete x (Branch n l r) =
+abstractDelete ::
+     (Ord a) => TreeAlgebra a (BinaryTree a) -> a -> BinaryTree a -> Maybe (BinaryTree a)
+abstractDelete _ _ Empty = Nothing
+abstractDelete (empty, branch) x (Branch n l r) =
   case compare x n of
-    LT -> Branch <$> pure n <*> delete x l <*> pure r
+    LT -> branch <$> pure n <*> abstractDelete (empty, branch) x l <*> pure r
     EQ ->
-      let deleteR = (\(rMin, r') -> Branch rMin l r') <$> popHead r
-          deleteL = (\(l', lMax) -> Branch lMax l' r) <$> popLast l
-       in deleteR <|> deleteL <|> Just Empty
-    GT -> Branch n l <$> delete x r
+      let fromR = (\(rMin, r') -> branch rMin l r') <$> abstractPopHead branch r
+          fromL = (\(l', lMax) -> branch lMax l' r) <$> abstractPopLast branch l
+       in fromR <|> fromL <|> Just Empty
+    GT -> Branch n l <$> abstractDelete (empty, branch) x r
+
+delete :: (Ord a) => a -> BinaryTree a -> Maybe (BinaryTree a)
+delete = abstractDelete idTreeAlgebra
 
 zipTreeWith :: (a -> b -> c) -> BinaryTree a -> BinaryTree b -> BinaryTree c
 zipTreeWith _ Empty _ = Empty
