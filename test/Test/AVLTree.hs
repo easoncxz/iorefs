@@ -14,7 +14,8 @@ prop_withHeightZipVsFold t = BT.zipTreeWith WithHeight (heightTree t) t == treeW
 
 prop_insertCommutesWithHeight :: Char -> BinaryTree Char -> Bool
 prop_insertCommutesWithHeight x tree =
-  treeWithHeight (BT.insert x tree) == insertWithHeight x (treeWithHeight tree)
+  treeWithHeight (BT.insert x tree) ==
+  insertWithHeight (WithHeight undefined x) (treeWithHeight tree)
 
 prop_deleteCommutesWithHeight :: Char -> BinaryTree Char -> Bool
 prop_deleteCommutesWithHeight x tree =
@@ -61,16 +62,16 @@ prop_avlTreesAreAVL (AVLTree t) = isAVL t
 
 prop_insertWithHeightAVLPreservesSearchProperty :: Char -> AVLTree Char -> Bool
 prop_insertWithHeightAVLPreservesSearchProperty x (AVLTree t) =
-  searchProperty . treeWithoutHeight . insertWithHeightAVL x $ t
+  searchProperty . treeWithoutHeight . insertWithHeightAVL (WithHeight undefined x) $ t
 
 prop_insertWithHeightAVLPreservesHeightInvariant :: Char -> AVLTree Char -> Bool
 prop_insertWithHeightAVLPreservesHeightInvariant x (AVLTree t) =
-  let large = insertWithHeightAVL x t
+  let large = insertWithHeightAVL (WithHeight undefined x) t
    in large == treeWithNewHeight large
 
 prop_insertWithHeightAVLPreservesAVLProperty :: Char -> AVLTree Char -> Bool
 prop_insertWithHeightAVLPreservesAVLProperty x (AVLTree t) =
-  isAVL . treeWithoutHeight . insertWithHeightAVL x $ t
+  isAVL . treeWithoutHeight . insertWithHeightAVL (WithHeight undefined x) $ t
 
 prop_deleteWithHeightAVLPreservesSearchProperty :: Char -> AVLTree Char -> Bool
 prop_deleteWithHeightAVLPreservesSearchProperty x (AVLTree t) =

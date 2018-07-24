@@ -54,8 +54,8 @@ branchWithNewHeight ::
   -> BinaryTree (WithHeight t)
 branchWithNewHeight = branchWithHeight . whValue
 
-leafWithHeight :: t -> BinaryTree (WithHeight t)
-leafWithHeight n = branchWithHeight n Empty Empty
+leafWithNewHeight :: WithHeight t -> BinaryTree (WithHeight t)
+leafWithNewHeight n = branchWithNewHeight n Empty Empty
 
 treeWithHeight :: BinaryTree a -> BinaryTree (WithHeight a)
 treeWithHeight = BT.foldTree branchWithHeight Empty
@@ -80,12 +80,13 @@ branch n (AVLTree l) (AVLTree r) =
 leaf :: a -> AVLTree a
 leaf n = branch n empty empty
 
-insertWithHeight :: (Ord a) => a -> BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
-insertWithHeight a Empty = leafWithHeight a
-insertWithHeight a (Branch (WithHeight h n) l r) =
+insertWithHeight ::
+     (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
+insertWithHeight a Empty = leafWithNewHeight a
+insertWithHeight a (Branch n l r) =
   if a < n
-    then branchWithHeight n (insertWithHeight a l) r
-    else branchWithHeight n l (insertWithHeight a r)
+    then branchWithNewHeight n (insertWithHeight a l) r
+    else branchWithNewHeight n l (insertWithHeight a r)
 
 popHeadWithHeight :: BinaryTree (WithHeight a) -> Maybe (WithHeight a, BinaryTree (WithHeight a))
 popHeadWithHeight Empty = Nothing
@@ -203,13 +204,14 @@ rebalanceOnce p@(Branch (WithHeight ph pn) pl pr) =
               LeftTaller _ _ _ _ -> rotateLeft (branchWithHeight pn pl (rotateRight rt))
     _ -> p
 
-insertWithHeightAVL :: (Ord a) => a -> BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
-insertWithHeightAVL a Empty = leafWithHeight a
-insertWithHeightAVL a (Branch (WithHeight h n) l r) =
+insertWithHeightAVL ::
+     (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
+insertWithHeightAVL a Empty = leafWithNewHeight a
+insertWithHeightAVL a (Branch n l r) =
   rebalanceOnce $
   if a < n
-    then branchWithHeight n (insertWithHeightAVL a l) r
-    else branchWithHeight n l (insertWithHeightAVL a r)
+    then branchWithNewHeight n (insertWithHeightAVL a l) r
+    else branchWithNewHeight n l (insertWithHeightAVL a r)
 
 deleteWithHeightAVL ::
      (Ord a) => a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
@@ -230,10 +232,10 @@ liftBT :: (BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)) -> AVLTree a 
 liftBT f = AVLTree . f . runAVLTree
 
 insert :: (Ord a) => a -> AVLTree a -> AVLTree a
-insert = liftBT . insertWithHeightAVL
+insert = liftBT . insertWithHeightAVL . WithHeight undefined
 
 fromList :: (Ord a) => [a] -> AVLTree a
-fromList = AVLTree . List.foldl' (flip insertWithHeightAVL) Empty
+fromList = AVLTree . List.foldl' (flip insertWithHeightAVL) Empty . fmap (WithHeight undefined)
 
 instance (Arbitrary a, Ord a) => Arbitrary (AVLTree a) where
   arbitrary = fromList <$> arbitrary
