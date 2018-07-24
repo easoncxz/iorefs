@@ -89,26 +89,25 @@ insertWithHeight a (Branch (WithHeight h n) l r) =
 
 popHeadWithHeight :: BinaryTree (WithHeight a) -> Maybe (WithHeight a, BinaryTree (WithHeight a))
 popHeadWithHeight Empty = Nothing
-popHeadWithHeight (Branch (WithHeight h n) l r) =
-  (fmap . second) (\l' -> branchWithHeight n l' r) (popHeadWithHeight l) <|>
-  Just (WithHeight h n, r)
+popHeadWithHeight (Branch n l r) =
+  (fmap . second) (\l' -> branchWithNewHeight n l' r) (popHeadWithHeight l) <|> Just (n, r)
 
 popHeadWithHeightAVL :: BinaryTree (WithHeight a) -> Maybe (WithHeight a, BinaryTree (WithHeight a))
 popHeadWithHeightAVL Empty = Nothing
-popHeadWithHeightAVL (Branch (WithHeight h n) l r) =
-  (fmap . second) (\l' -> rebalanceOnce (branchWithHeight n l' r)) (popHeadWithHeightAVL l) <|>
-  Just (WithHeight h n, r)
+popHeadWithHeightAVL (Branch n l r) =
+  (fmap . second) (\l' -> rebalanceOnce (branchWithNewHeight n l' r)) (popHeadWithHeightAVL l) <|>
+  Just (n, r)
 
 popLastWithHeight :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a), WithHeight a)
 popLastWithHeight Empty = Nothing
-popLastWithHeight (Branch (WithHeight h n) l r) =
-  (fmap . first) (\r' -> branchWithHeight n l r') (popLastWithHeight r) <|> Just (l, WithHeight h n)
+popLastWithHeight (Branch n l r) =
+  (fmap . first) (\r' -> branchWithNewHeight n l r') (popLastWithHeight r) <|> Just (l, n)
 
 popLastWithHeightAVL :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a), WithHeight a)
 popLastWithHeightAVL Empty = Nothing
-popLastWithHeightAVL (Branch (WithHeight h n) l r) =
-  (fmap . first) (\r' -> rebalanceOnce (branchWithHeight n l r')) (popLastWithHeightAVL r) <|>
-  Just (l, WithHeight h n)
+popLastWithHeightAVL (Branch n l r) =
+  (fmap . first) (\r' -> rebalanceOnce (branchWithNewHeight n l r')) (popLastWithHeightAVL r) <|>
+  Just (l, n)
 
 deleteWithHeight :: (Ord a) => a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
 deleteWithHeight _ Empty = Nothing
@@ -168,28 +167,21 @@ isAVL t = go (treeWithHeight t)
     nodeAdmissable :: BinaryTree (WithHeight a) -> Bool
     nodeAdmissable t = balanceFactor t `elem` [-1 .. 1]
 
-rotateLeft :: BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
-rotateLeft Empty = Empty
-rotateLeft b@(Branch _ _ Empty) = b
-rotateLeft (Branch (WithHeight _ pn) pl (Branch (WithHeight _ cn) cl cr)) =
-  branchWithHeight cn (branchWithHeight pn pl cl) cr
-
 rotateLeftMaybe :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
-rotateLeftMaybe Empty = Nothing
-rotateLeftMaybe (Branch _ _ Empty) = Nothing
-rotateLeftMaybe b = Just (rotateLeft b)
+rotateLeftMaybe (Branch pn pl (Branch cn cl cr)) =
+  Just (branchWithNewHeight cn (branchWithNewHeight pn pl cl) cr)
+rotateLeftMaybe _ = Nothing
 
-rotateRight :: BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
-rotateRight Empty = Empty
-rotateRight b@(Branch _ Empty Empty) = b
-rotateRight b@(Branch _ Empty Branch {}) = b
-rotateRight p@(Branch (WithHeight _ pn) c@(Branch (WithHeight _ cn) cl cr) pr) =
-  branchWithHeight cn cl (branchWithHeight pn cr pr)
+rotateLeft :: BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
+rotateLeft t = fromMaybe t (rotateLeftMaybe t)
 
 rotateRightMaybe :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
-rotateRightMaybe Empty = Nothing
-rotateRightMaybe (Branch _ Empty _) = Nothing
-rotateRightMaybe b = Just (rotateRight b)
+rotateRightMaybe (Branch pn (Branch cn cl cr) pr) =
+  Just (branchWithNewHeight cn cl (branchWithNewHeight pn cr pr))
+rotateRightMaybe _ = Nothing
+
+rotateRight :: BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
+rotateRight t = fromMaybe t (rotateRightMaybe t)
 
 rebalanceOnce :: BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
 rebalanceOnce Empty = Empty
