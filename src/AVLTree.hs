@@ -103,15 +103,7 @@ popLastWithHeightAVL (Branch n l r) =
 
 deleteWithHeight ::
      (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
-deleteWithHeight _ Empty = Nothing
-deleteWithHeight x (Branch n l r) =
-  case compare x n of
-    LT -> branchWithNewHeight <$> pure n <*> deleteWithHeight x l <*> pure r
-    EQ ->
-      let fromR = (\(rMin, r') -> branchWithNewHeight rMin l r') <$> popHeadWithHeight r
-          fromL = (\(l', lMax) -> branchWithNewHeight lMax l' r) <$> popLastWithHeight l
-       in fromR <|> fromL <|> Just Empty
-    GT -> branchWithNewHeight n l <$> deleteWithHeight x r
+deleteWithHeight = BT.abstractDelete withHeightAlgebra
 
 newtype BalanceFactor = BalanceFactor
   { runBalanceFactor :: Int

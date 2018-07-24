@@ -17,7 +17,7 @@ prop_insertCommutesWithHeight x tree =
   treeWithHeight (BT.insert x tree) ==
   insertWithHeight (WithHeight undefined x) (treeWithHeight tree)
 
-prop_deleteCommutesWithHeight :: Char -> BinaryTree Char -> Bool
+prop_deleteCommutesWithHeight :: Int -> BinaryTree Int -> Bool
 prop_deleteCommutesWithHeight x tree =
   fmap treeWithHeight (BT.delete x tree) ==
   deleteWithHeight (WithHeight undefined x) (treeWithHeight tree)

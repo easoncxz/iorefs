@@ -130,8 +130,8 @@ abstractDelete (empty, branch) x (Branch n l r) =
     EQ ->
       let fromR = (\(rMin, r') -> branch rMin l r') <$> abstractPopHead branch r
           fromL = (\(l', lMax) -> branch lMax l' r) <$> abstractPopLast branch l
-       in fromR <|> fromL <|> Just Empty
-    GT -> Branch n l <$> abstractDelete (empty, branch) x r
+       in fromR <|> fromL <|> Just empty
+    GT -> branch n l <$> abstractDelete (empty, branch) x r
 
 delete :: (Ord a) => a -> BinaryTree a -> Maybe (BinaryTree a)
 delete = abstractDelete idTreeAlgebra
