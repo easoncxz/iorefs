@@ -19,7 +19,8 @@ prop_insertCommutesWithHeight x tree =
 
 prop_deleteCommutesWithHeight :: Char -> BinaryTree Char -> Bool
 prop_deleteCommutesWithHeight x tree =
-  fmap treeWithHeight (BT.delete x tree) == deleteWithHeight x (treeWithHeight tree)
+  fmap treeWithHeight (BT.delete x tree) ==
+  deleteWithHeight (WithHeight undefined x) (treeWithHeight tree)
 
 prop_popHeadCommutesWithHeight :: BinaryTree Char -> Bool
 prop_popHeadCommutesWithHeight tree =
@@ -75,13 +76,14 @@ prop_insertWithHeightAVLPreservesAVLProperty x (AVLTree t) =
 
 prop_deleteWithHeightAVLPreservesSearchProperty :: Char -> AVLTree Char -> Bool
 prop_deleteWithHeightAVLPreservesSearchProperty x (AVLTree t) =
-  fromMaybe True . fmap (searchProperty . treeWithoutHeight) $ deleteWithHeightAVL x t
+  fromMaybe True . fmap (searchProperty . treeWithoutHeight) $
+  deleteWithHeightAVL (WithHeight undefined x) t
 
 prop_deleteWithHeightAVLPreservesHeightInvariant :: Char -> AVLTree Char -> Bool
 prop_deleteWithHeightAVLPreservesHeightInvariant x (AVLTree t) =
-  let largeM = deleteWithHeightAVL x t
+  let largeM = deleteWithHeightAVL (WithHeight undefined x) t
    in largeM == fmap treeWithNewHeight largeM
 
 prop_deleteWithHeightAVLPreservesAVLProperty :: Char -> AVLTree Char -> Bool
 prop_deleteWithHeightAVLPreservesAVLProperty x (AVLTree t) =
-  fromMaybe True . fmap (isAVL . treeWithoutHeight) $ deleteWithHeightAVL x t
+  fromMaybe True . fmap (isAVL . treeWithoutHeight) $ deleteWithHeightAVL (WithHeight undefined x) t

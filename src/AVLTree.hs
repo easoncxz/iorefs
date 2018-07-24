@@ -101,16 +101,17 @@ popLastWithHeightAVL (Branch n l r) =
   (fmap . first) (\r' -> rebalanceOnce (branchWithNewHeight n l r')) (popLastWithHeightAVL r) <|>
   Just (l, n)
 
-deleteWithHeight :: (Ord a) => a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
+deleteWithHeight ::
+     (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
 deleteWithHeight _ Empty = Nothing
-deleteWithHeight x (Branch (WithHeight _ n) l r) =
+deleteWithHeight x (Branch n l r) =
   case compare x n of
-    LT -> branchWithHeight <$> pure n <*> deleteWithHeight x l <*> pure r
+    LT -> branchWithNewHeight <$> pure n <*> deleteWithHeight x l <*> pure r
     EQ ->
-      let fromR = (\(WithHeight _ rMin, r') -> branchWithHeight rMin l r') <$> popHeadWithHeight r
-          fromL = (\(l', WithHeight _ lMax) -> branchWithHeight lMax l' r) <$> popLastWithHeight l
+      let fromR = (\(rMin, r') -> branchWithNewHeight rMin l r') <$> popHeadWithHeight r
+          fromL = (\(l', lMax) -> branchWithNewHeight lMax l' r) <$> popLastWithHeight l
        in fromR <|> fromL <|> Just Empty
-    GT -> branchWithHeight n l <$> deleteWithHeight x r
+    GT -> branchWithNewHeight n l <$> deleteWithHeight x r
 
 newtype BalanceFactor = BalanceFactor
   { runBalanceFactor :: Int
@@ -205,19 +206,17 @@ insertWithHeightAVL a (Branch n l r) =
     else branchWithNewHeight n l (insertWithHeightAVL a r)
 
 deleteWithHeightAVL ::
-     (Ord a) => a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
+     (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
 deleteWithHeightAVL _ Empty = Nothing
-deleteWithHeightAVL x (Branch (WithHeight _ n) l r) =
+deleteWithHeightAVL x (Branch n l r) =
   rebalanceOnce <$>
   case compare x n of
-    LT -> branchWithHeight <$> pure n <*> deleteWithHeightAVL x l <*> pure r
+    LT -> branchWithNewHeight <$> pure n <*> deleteWithHeightAVL x l <*> pure r
     EQ ->
-      let deleteR =
-            (\(WithHeight _ rMin, r') -> branchWithHeight rMin l r') <$> popHeadWithHeightAVL r
-          deleteL =
-            (\(l', WithHeight _ lMax) -> branchWithHeight lMax l' r) <$> popLastWithHeightAVL l
+      let deleteR = (\(rMin, r') -> branchWithNewHeight rMin l r') <$> popHeadWithHeightAVL r
+          deleteL = (\(l', lMax) -> branchWithNewHeight lMax l' r) <$> popLastWithHeightAVL l
        in deleteR <|> deleteL <|> Just Empty
-    GT -> branchWithHeight n l <$> deleteWithHeightAVL x r
+    GT -> branchWithNewHeight n l <$> deleteWithHeightAVL x r
 
 liftBT :: (BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)) -> AVLTree a -> AVLTree a
 liftBT f = AVLTree . f . runAVLTree
