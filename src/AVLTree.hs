@@ -50,6 +50,9 @@ branchWithHeight n l r =
 branchWithNewHeight :: BranchCons (WithHeight a) (BinaryTree (WithHeight a))
 branchWithNewHeight = branchWithHeight . whValue
 
+withHeightAlgebra :: TreeAlgebra (WithHeight a) (BinaryTree (WithHeight a))
+withHeightAlgebra = (Empty, branchWithNewHeight)
+
 leafWithNewHeight :: WithHeight t -> BinaryTree (WithHeight t)
 leafWithNewHeight n = branchWithNewHeight n Empty Empty
 
@@ -78,11 +81,7 @@ leaf n = branch n empty empty
 
 insertWithHeight ::
      (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
-insertWithHeight a Empty = leafWithNewHeight a
-insertWithHeight a (Branch n l r) =
-  if a < n
-    then branchWithNewHeight n (insertWithHeight a l) r
-    else branchWithNewHeight n l (insertWithHeight a r)
+insertWithHeight = BT.abstractInsert withHeightAlgebra
 
 popHeadWithHeight :: BinaryTree (WithHeight a) -> Maybe (WithHeight a, BinaryTree (WithHeight a))
 popHeadWithHeight = BT.abstractPopHead branchWithNewHeight
