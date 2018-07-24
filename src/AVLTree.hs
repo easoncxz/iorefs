@@ -99,44 +99,6 @@ deleteWithHeight ::
      (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
 deleteWithHeight = BT.abstractDelete withHeightAlgebra
 
-newtype BalanceFactor = BalanceFactor
-  { runBalanceFactor :: Int
-  } deriving (Show, Eq, Num, Ord)
-
-data Balance a
-  = LeftTaller BalanceFactor
-               (WithHeight a)
-               (BinaryTree (WithHeight a))
-               (BinaryTree (WithHeight a))
-  | SameHeight
-  | RightTaller BalanceFactor
-                (WithHeight a)
-                (BinaryTree (WithHeight a))
-                (BinaryTree (WithHeight a))
-  deriving (Show, Eq)
-
-balance :: BinaryTree (WithHeight a) -> Balance a
-balance Empty = SameHeight
-balance (Branch _ Empty Empty) = SameHeight
-balance (Branch _ lt@(Branch n l r) Empty) =
-  LeftTaller (BalanceFactor (readHeight lt - readHeight Empty)) n l r
-balance (Branch _ Empty rt@(Branch n l r)) =
-  RightTaller (BalanceFactor (readHeight Empty - readHeight rt)) n l r
-balance (Branch _ lt@(Branch ln ll lr) rt@(Branch rn rl rr)) =
-  let factor = readHeight lt - readHeight rt
-   in case compare factor 0 of
-        GT -> LeftTaller (BalanceFactor factor) ln ll lr
-        EQ -> SameHeight
-        LT -> RightTaller (BalanceFactor factor) rn rl rr
-
-readBalanceFactor :: Balance a -> Int
-readBalanceFactor (LeftTaller (BalanceFactor f) _ _ _) = f
-readBalanceFactor SameHeight = 0
-readBalanceFactor (RightTaller (BalanceFactor f) _ _ _) = f
-
-balanceFactor :: BinaryTree (WithHeight a) -> Int
-balanceFactor = readBalanceFactor . balance
-
 isAVL :: (Ord a) => BinaryTree a -> Bool
 isAVL t = go (treeWithHeight t)
   where
@@ -144,7 +106,7 @@ isAVL t = go (treeWithHeight t)
     go Empty = True
     go b@(Branch _ l r) = nodeAdmissable b && go l && go r
     nodeAdmissable :: BinaryTree (WithHeight a) -> Bool
-    nodeAdmissable t = balanceFactor t `elem` [-1 .. 1]
+    nodeAdmissable t = fst (analyseBalance t) == Balanced
 
 rotateLeftMaybe :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
 rotateLeftMaybe = BT.abstractRotateLeftMaybe branchWithNewHeight
@@ -158,25 +120,54 @@ rotateRightMaybe = BT.abstractRotateRightMaybe branchWithNewHeight
 rotateRight :: BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
 rotateRight t = fromMaybe t (rotateRightMaybe t)
 
+data IsBalanced
+  = NotBalanced
+  | Balanced
+  deriving (Show, Eq)
+
+data TallerSide
+  = LeftTaller
+  | NeitherTaller
+  | RightTaller
+  deriving (Show, Eq)
+
+analyseBalance :: BinaryTree (WithHeight a) -> (IsBalanced, TallerSide)
+analyseBalance Empty = (Balanced, NeitherTaller)
+analyseBalance (Branch _ l r) =
+  let lh = readHeight l
+      rh = readHeight r
+      isBalanced =
+        if abs (lh - rh) <= 1
+          then Balanced
+          else NotBalanced
+      tallerSide =
+        case compare lh rh of
+          LT -> RightTaller
+          EQ -> NeitherTaller
+          GT -> LeftTaller
+   in (isBalanced, tallerSide)
+
 rebalanceOnce :: BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
 rebalanceOnce Empty = Empty
-rebalanceOnce p@(Branch (WithHeight _ pn) pl pr) =
-  case balance p of
-    LeftTaller f ln ll lr
-      | f > 1 ->
-        let lt = Branch ln ll lr
-         in case balance lt of
-              LeftTaller _ _ _ _ -> rotateRight p
-              SameHeight -> rotateRight p
-              RightTaller _ _ _ _ -> rotateRight (branchWithHeight pn (rotateLeft lt) pr)
-    RightTaller f rn rl rr
-      | f < -1 ->
-        let rt = Branch rn rl rr
-         in case balance rt of
-              RightTaller _ _ _ _ -> rotateLeft p
-              SameHeight -> rotateLeft p
-              LeftTaller _ _ _ _ -> rotateLeft (branchWithHeight pn pl (rotateRight rt))
-    _ -> p
+rebalanceOnce (Branch n Empty Empty) = Branch n Empty Empty
+rebalanceOnce b@(Branch n l r) =
+  let errTooMuch = error "Imbalance in tree got out of control"
+      errNonsenseAnalysis =
+        error
+          "Nonsense output from analyseBalance: neither side is taller but tree is not balanced?!"
+   in case analyseBalance b of
+        (Balanced, _) -> b
+        (_, NeitherTaller) -> errNonsenseAnalysis
+        (_, LeftTaller) ->
+          case analyseBalance l of
+            (NotBalanced, _) -> errTooMuch
+            (_, RightTaller) -> rotateRight (branchWithNewHeight n (rotateLeft l) r)
+            (_, _) -> rotateRight b
+        (_, RightTaller) ->
+          case analyseBalance r of
+            (NotBalanced, _) -> errTooMuch
+            (_, LeftTaller) -> rotateLeft (branchWithNewHeight n l (rotateRight r))
+            (_, _) -> rotateLeft b
 
 insertWithHeightAVL ::
      (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
