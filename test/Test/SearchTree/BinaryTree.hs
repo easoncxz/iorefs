@@ -1,6 +1,7 @@
-module Test.BinaryTree where
+module Test.SearchTree.BinaryTree where
 
-import BinaryTree
+import SearchTree.BinaryTree
+import qualified SearchTree.BinaryTree as BT
 
 import Control.Arrow (first, second)
 import Data.Foldable (toList)
@@ -15,10 +16,10 @@ prop_foldTree :: BinaryTree Int -> Bool
 prop_foldTree t = foldTree Branch Empty t == t
 
 prop_headMatchesInorderTraversal :: BinaryTree Int -> Bool
-prop_headMatchesInorderTraversal t = BinaryTree.head t == headMay (inorderTraversal t)
+prop_headMatchesInorderTraversal t = BT.head t == headMay (inorderTraversal t)
 
 prop_lastMatchesInorderTraversal :: BinaryTree Int -> Bool
-prop_lastMatchesInorderTraversal t = BinaryTree.last t == lastMay (inorderTraversal t)
+prop_lastMatchesInorderTraversal t = BT.last t == lastMay (inorderTraversal t)
 
 prop_popHeadMatchesInorderTraversal :: BinaryTree Int -> Bool
 prop_popHeadMatchesInorderTraversal t =
@@ -59,7 +60,7 @@ prop_searchPropertyStepwise xs =
 prop_elem :: [Int] -> Int -> Bool
 prop_elem xs x =
   let tree = fromList xs
-   in BinaryTree.elem x tree == Prelude.elem x xs
+   in BT.elem x tree == Prelude.elem x xs
 
 prop_abstractInsertImplementsOldInsert :: Char -> BinaryTree Char -> Bool
 prop_abstractInsertImplementsOldInsert c t = insert c t == oldInsert c t
@@ -76,7 +77,7 @@ prop_insertMaintainsSearchProperty x t = searchProperty (insert x t)
 
 prop_deleteMaintainsSearchProperty :: BinaryTree Char -> Char -> Bool
 prop_deleteMaintainsSearchProperty tree x =
-  case (x `BinaryTree.elem` tree, delete x tree) of
+  case (x `BT.elem` tree, delete x tree) of
     (False, Nothing) -> True
     (True, Just small) -> searchProperty small
     _ -> False

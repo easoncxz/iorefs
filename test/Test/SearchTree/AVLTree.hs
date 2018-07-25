@@ -1,10 +1,10 @@
-module Test.AVLTree where
+module Test.SearchTree.AVLTree where
 
-import AVLTree
-import BinaryTree (BinaryTree(Branch, Empty))
-import qualified BinaryTree as BT
+import SearchTree.AVLTree
+import SearchTree.BinaryTree (BinaryTree(Branch, Empty))
+import qualified SearchTree.BinaryTree as BT
 
-import Test.BinaryTree (searchProperty)
+import Test.SearchTree.BinaryTree (searchProperty)
 
 import Control.Arrow (first, second)
 import Data.Maybe (fromMaybe)

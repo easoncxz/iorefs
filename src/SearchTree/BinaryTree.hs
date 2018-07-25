@@ -1,4 +1,4 @@
-module BinaryTree where
+module SearchTree.BinaryTree where
 
 import Control.Applicative
 import Control.Arrow (first, second)

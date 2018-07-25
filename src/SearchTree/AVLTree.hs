@@ -1,7 +1,7 @@
-module AVLTree where
+module SearchTree.AVLTree where
 
-import BinaryTree (BinaryTree(Branch, Empty), BranchCons, EmptyCons, TreeAlgebra)
-import qualified BinaryTree as BT
+import SearchTree.BinaryTree (BinaryTree(Branch, Empty), BranchCons, EmptyCons, TreeAlgebra)
+import qualified SearchTree.BinaryTree as BT
 
 import Control.Applicative ((<|>))
 import Control.Arrow ((***), first, second)
