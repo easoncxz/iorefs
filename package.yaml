@@ -37,12 +37,13 @@ dependencies:
 
 default-extensions:
 - BangPatterns
-- DeriveFunctor
 - DeriveFoldable
+- DeriveFunctor
 - FlexibleContexts
 - FlexibleInstances
 - GADTs
 - GeneralizedNewtypeDeriving
+- InstanceSigs
 - MultiParamTypeClasses
 - NamedFieldPuns
 - PartialTypeSignatures

@@ -1,7 +1,7 @@
 module Test.SearchTree.BinaryTree where
 
 import SearchTree.BinaryTree
-import qualified SearchTree.BinaryTree as BT
+import qualified SearchTree.Class as SearchTree
 
 import Control.Arrow (first, second)
 import Data.Foldable (toList)
@@ -16,18 +16,18 @@ prop_foldTree :: BinaryTree Int -> Bool
 prop_foldTree t = foldTree Branch Empty t == t
 
 prop_headMatchesInorderTraversal :: BinaryTree Int -> Bool
-prop_headMatchesInorderTraversal t = BT.head t == headMay (inorderTraversal t)
+prop_headMatchesInorderTraversal t = SearchTree.head t == headMay (inorderTraversal t)
 
 prop_lastMatchesInorderTraversal :: BinaryTree Int -> Bool
-prop_lastMatchesInorderTraversal t = BT.last t == lastMay (inorderTraversal t)
+prop_lastMatchesInorderTraversal t = SearchTree.last t == lastMay (inorderTraversal t)
 
 prop_popHeadMatchesInorderTraversal :: BinaryTree Int -> Bool
 prop_popHeadMatchesInorderTraversal t =
-  fmap (second inorderTraversal) (popHead t) == List.uncons (inorderTraversal t)
+  fmap (second inorderTraversal) (SearchTree.popHead t) == List.uncons (inorderTraversal t)
 
 prop_popHeadPreservesSearchProperty :: BinaryTree Char -> Bool
 prop_popHeadPreservesSearchProperty t =
-  case popHead t of
+  case SearchTree.popHead t of
     Nothing -> True
     Just (_, t') -> searchProperty t'
 
@@ -39,11 +39,11 @@ unsnoc xs =
 
 prop_popLastMatchesInorderTraversal :: BinaryTree Int -> Bool
 prop_popLastMatchesInorderTraversal tree =
-  fmap (first inorderTraversal) (popLast tree) == unsnoc (inorderTraversal tree)
+  fmap (first inorderTraversal) (SearchTree.popLast tree) == unsnoc (inorderTraversal tree)
 
 prop_popLastPreservesSearchProperty :: BinaryTree Char -> Bool
 prop_popLastPreservesSearchProperty t =
-  case popLast t of
+  case SearchTree.popLast t of
     Nothing -> True
     Just (t', _) -> searchProperty t'
 
@@ -54,16 +54,16 @@ searchProperty tree =
 
 prop_searchPropertyStepwise :: [Char] -> Bool
 prop_searchPropertyStepwise xs =
-  let steps = scanr insert Empty xs
+  let steps = scanr SearchTree.insert Empty xs
    in all searchProperty steps
 
 prop_elem :: [Int] -> Int -> Bool
 prop_elem xs x =
   let tree = fromList xs
-   in BT.elem x tree == Prelude.elem x xs
+   in SearchTree.elem x tree == Prelude.elem x xs
 
 prop_abstractInsertImplementsOldInsert :: Char -> BinaryTree Char -> Bool
-prop_abstractInsertImplementsOldInsert c t = insert c t == oldInsert c t
+prop_abstractInsertImplementsOldInsert c t = SearchTree.insert c t == oldInsert c t
   where
     oldInsert :: (Ord a) => a -> BinaryTree a -> BinaryTree a
     oldInsert a Empty = leaf a
@@ -73,11 +73,11 @@ prop_abstractInsertImplementsOldInsert c t = insert c t == oldInsert c t
         else Branch l n (oldInsert a r)
 
 prop_insertMaintainsSearchProperty :: Char -> BinaryTree Char -> Bool
-prop_insertMaintainsSearchProperty x t = searchProperty (insert x t)
+prop_insertMaintainsSearchProperty x t = searchProperty (SearchTree.insert x t)
 
 prop_deleteMaintainsSearchProperty :: BinaryTree Char -> Char -> Bool
 prop_deleteMaintainsSearchProperty tree x =
-  case (x `BT.elem` tree, delete x tree) of
+  case (x `SearchTree.elem` tree, SearchTree.delete x tree) of
     (False, Nothing) -> True
     (True, Just small) -> searchProperty small
     _ -> False

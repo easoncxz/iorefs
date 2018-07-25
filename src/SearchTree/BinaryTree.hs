@@ -1,27 +1,21 @@
 module SearchTree.BinaryTree where
 
+import SearchTree.Class (SearchTree(..))
+
 import Control.Applicative
 import Control.Arrow (first, second)
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
-import Prelude hiding (elem, head, last, tail)
+import Prelude hiding (head, last, tail)
 
 import Test.QuickCheck (Arbitrary(arbitrary), Property, (==>), conjoin, discard)
 
 data BinaryTree a
   = Empty
-  | Branch
-           (BinaryTree a)
+  | Branch (BinaryTree a)
            a
            (BinaryTree a)
   deriving (Show, Eq, Functor, Foldable)
-
-empty :: BinaryTree a
-empty = Empty
-
-null :: BinaryTree a -> Bool
-null Empty = True
-null (Branch _ _ _) = False
 
 leaf :: a -> BinaryTree a
 leaf n = Branch Empty n Empty
@@ -63,33 +57,15 @@ preorderTraversal = foldTree preorder []
     preorder :: [a] -> a -> [a] -> [a]
     preorder ls n rs = [n] ++ ls ++ rs
 
-head :: BinaryTree a -> Maybe a
-head = foldTree leftOrSelf Nothing
-  where
-    leftOrSelf :: Maybe a -> a -> Maybe a -> Maybe a
-    leftOrSelf l n _ = l <|> Just n
-
-last :: BinaryTree a -> Maybe a
-last = foldTree rightOrSelf Nothing
-  where
-    rightOrSelf :: Maybe a -> a -> Maybe a -> Maybe a
-    rightOrSelf _ n r = r <|> Just n
-
 abstractPopHead :: BranchCons a (BinaryTree a) -> BinaryTree a -> Maybe (a, BinaryTree a)
 abstractPopHead _ Empty = Nothing
 abstractPopHead branch (Branch l n r) =
   (fmap . second) (\l' -> branch l' n r) (abstractPopHead branch l) <|> Just (n, r)
 
-popHead :: BinaryTree a -> Maybe (a, BinaryTree a)
-popHead = abstractPopHead Branch
-
 abstractPopLast :: BranchCons a (BinaryTree a) -> BinaryTree a -> Maybe (BinaryTree a, a)
 abstractPopLast _ Empty = Nothing
 abstractPopLast branch (Branch l n r) =
   (fmap . first) (\r' -> branch l n r') (abstractPopLast branch r) <|> Just (l, n)
-
-popLast :: BinaryTree a -> Maybe (BinaryTree a, a)
-popLast = abstractPopLast Branch
 
 rootPrev :: BinaryTree a -> Maybe a
 rootPrev Empty = Nothing
@@ -108,22 +84,19 @@ abstractInsert (empty, branch) x (Branch l n r) =
     then branch (abstractInsert (empty, branch) x l) n (foldTree branch empty r)
     else branch (foldTree branch empty l) n (abstractInsert (empty, branch) x r)
 
-insert :: (Ord a) => a -> BinaryTree a -> BinaryTree a
-insert = abstractInsert idTreeAlgebra
+findImpl :: (Ord a) => a -> BinaryTree a -> Maybe a
+findImpl a Empty = Nothing
+findImpl a (Branch l n r) =
+  case compare a n of
+    LT -> find a l
+    EQ -> Just n
+    GT -> find a r
 
 fromList :: (Ord a) => [a] -> BinaryTree a
 fromList = List.foldl' (flip insert) Empty
 
 instance (Arbitrary a, Ord a) => Arbitrary (BinaryTree a) where
   arbitrary = fromList <$> arbitrary
-
-elem :: (Ord a) => a -> BinaryTree a -> Bool
-elem _ Empty = False
-elem x (Branch l n r) =
-  case compare x n of
-    LT -> x `elem` l
-    EQ -> True
-    GT -> x `elem` r
 
 abstractDelete ::
      (Ord a) => TreeAlgebra a (BinaryTree a) -> a -> BinaryTree a -> Maybe (BinaryTree a)
@@ -137,14 +110,11 @@ abstractDelete (empty, branch) x (Branch l n r) =
        in fromR <|> fromL <|> Just empty
     GT -> branch l n <$> abstractDelete (empty, branch) x r
 
-delete :: (Ord a) => a -> BinaryTree a -> Maybe (BinaryTree a)
-delete = abstractDelete idTreeAlgebra
-
 zipTreeWith :: (a -> b -> c) -> BinaryTree a -> BinaryTree b -> BinaryTree c
 zipTreeWith _ Empty _ = Empty
 zipTreeWith _ _ Empty = Empty
 zipTreeWith f (Branch al a ar) (Branch bl b br) =
-  Branch  (zipTreeWith f al bl) (f a b) (zipTreeWith f ar br)
+  Branch (zipTreeWith f al bl) (f a b) (zipTreeWith f ar br)
 
 zipTree :: BinaryTree a -> BinaryTree b -> BinaryTree (a, b)
 zipTree = zipTreeWith (,)
@@ -184,3 +154,21 @@ rotateRightMaybe = abstractRotateRightMaybe Branch
 
 rotateRight :: BinaryTree a -> BinaryTree a
 rotateRight t = fromMaybe t (rotateRightMaybe t)
+
+instance SearchTree BinaryTree where
+  empty = Empty
+  null t =
+    case t of
+      Empty -> True
+      Branch _ _ _ -> False
+  insert = abstractInsert idTreeAlgebra
+  delete = abstractDelete idTreeAlgebra
+  find = findImpl
+  head = foldTree leftOrSelf Nothing
+    where
+      leftOrSelf l n _ = l <|> Just n
+  last = foldTree rightOrSelf Nothing
+    where
+      rightOrSelf _ n r = r <|> Just n
+  popHead = abstractPopHead Branch
+  popLast = abstractPopLast Branch
