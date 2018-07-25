@@ -7,6 +7,7 @@ import qualified SearchTree.BinaryTree as BT
 import Test.SearchTree.BinaryTree (searchProperty)
 
 import Control.Arrow (first, second)
+import Data.Foldable
 import Data.Maybe (fromMaybe)
 
 prop_withHeightZipVsFold :: BinaryTree Char -> Bool
@@ -85,3 +86,6 @@ prop_deletePreservesHeightInvariant x t =
 
 prop_deletePreservesAVLProperty :: Char -> AVLTree Char -> Bool
 prop_deletePreservesAVLProperty x t = fromMaybe True . fmap validAVL $ delete x t
+
+prop_foldrMatchesInorderTraversal :: AVLTree Char -> Bool
+prop_foldrMatchesInorderTraversal t = toList t == fmap whValue (BT.inorderTraversal (runAVLTree t))

@@ -122,3 +122,6 @@ prop_rotateBackAndForthAgain :: BinaryTree Char -> Bool
 prop_rotateBackAndForthAgain t =
   fromMaybe t (rotateLeftMaybe =<< rotateRightMaybe t) == t &&
   fromMaybe t (rotateRightMaybe =<< rotateLeftMaybe t) == t
+
+prop_foldableMatchesInorderTraversal :: BinaryTree Char -> Bool
+prop_foldableMatchesInorderTraversal t = toList t == inorderTraversal t

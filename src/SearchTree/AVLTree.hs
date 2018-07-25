@@ -20,9 +20,15 @@ data WithHeight a = WithHeight
 instance Ord a => Ord (WithHeight a) where
   compare = compare `on` whValue
 
+instance Functor WithHeight where
+  fmap f (WithHeight h a) = WithHeight h (f a)
+
+instance Foldable WithHeight where
+  foldr f z (WithHeight _ a) = f a z
+
 newtype AVLTree a = AVLTree
   { runAVLTree :: BinaryTree (WithHeight a)
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Functor, Foldable)
 
 emptyTreeHeight :: Int
 emptyTreeHeight = -1
