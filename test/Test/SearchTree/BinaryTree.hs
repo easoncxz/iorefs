@@ -3,20 +3,23 @@ module Test.SearchTree.BinaryTree where
 import SearchTree.BinaryTree
 import qualified SearchTree.Class as SearchTree
 
+import qualified Test.SearchTree as SearchTree
+
 import Control.Arrow (first, second)
 import Data.Foldable (toList)
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
+import Data.Proxy
 import qualified Data.Sequence as Seq
 import qualified Data.Tuple as Tuple
-import Safe (headMay, lastMay)
+import Safe (lastMay)
 import Test.QuickCheck (Gen, NonEmptyList(NonEmpty), Property, (==>), discard, elements)
 
 prop_foldTree :: BinaryTree Int -> Bool
 prop_foldTree t = foldTree Branch Empty t == t
 
-prop_headMatchesInorderTraversal :: BinaryTree Int -> Bool
-prop_headMatchesInorderTraversal t = SearchTree.head t == headMay (inorderTraversal t)
+prop_searchTreeContract :: Property
+prop_searchTreeContract = SearchTree.contract (Proxy :: Proxy BinaryTree) (Proxy :: Proxy Int)
 
 prop_lastMatchesInorderTraversal :: BinaryTree Int -> Bool
 prop_lastMatchesInorderTraversal t = SearchTree.last t == lastMay (inorderTraversal t)
