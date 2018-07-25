@@ -12,8 +12,6 @@ import Data.Maybe (fromMaybe)
 
 import Test.QuickCheck (Arbitrary, arbitrary)
 
-type Height = Int
-
 data WithHeight a = WithHeight
   { whHeight :: Int
   , whValue :: a
@@ -26,10 +24,10 @@ newtype AVLTree a = AVLTree
   { runAVLTree :: BinaryTree (WithHeight a)
   } deriving (Show, Eq)
 
-emptyTreeHeight :: Height
+emptyTreeHeight :: Int
 emptyTreeHeight = -1
 
-wouldBeHeight :: Height -> Height -> Height
+wouldBeHeight :: Int -> Int -> Int
 wouldBeHeight l r = 1 + (max l r)
 
 heightTree :: BinaryTree a -> BinaryTree Int
