@@ -33,24 +33,24 @@ wouldBeHeight l r = 1 + (max l r)
 heightTree :: BinaryTree a -> BinaryTree Int
 heightTree = snd . BT.foldTree build (emptyTreeHeight, Empty)
   where
-    build n (lh, lt) (rh, rt) =
+    build (lh, lt) n (rh, rt) =
       let h = wouldBeHeight lh rh
-       in (h, Branch h lt rt)
+       in (h, Branch lt h rt)
 
 readHeight :: BinaryTree (WithHeight a) -> Int
 readHeight = fromMaybe emptyTreeHeight . fmap whHeight . BT.node
 
 branchWithHeight ::
-     t -> BinaryTree (WithHeight t) -> BinaryTree (WithHeight t) -> BinaryTree (WithHeight t)
-branchWithHeight n l r =
+     BinaryTree (WithHeight t) -> t -> BinaryTree (WithHeight t) -> BinaryTree (WithHeight t)
+branchWithHeight l n r =
   let h = wouldBeHeight (readHeight l) (readHeight r)
-   in Branch (WithHeight h n) l r
+   in Branch l (WithHeight h n) r
 
 branchWithNewHeight :: BranchCons (WithHeight a) (BinaryTree (WithHeight a))
-branchWithNewHeight = branchWithHeight . whValue
+branchWithNewHeight l n r = branchWithHeight l (whValue n) r
 
 branchWithNewHeightAVL :: BranchCons (WithHeight a) (BinaryTree (WithHeight a))
-branchWithNewHeightAVL n l r = rebalanceOnce (branchWithNewHeight n l r)
+branchWithNewHeightAVL l n r = rebalanceOnce (branchWithNewHeight l n r)
 
 withHeightAlgebra :: TreeAlgebra (WithHeight a) (BinaryTree (WithHeight a))
 withHeightAlgebra = (Empty, branchWithNewHeight)
@@ -87,7 +87,7 @@ popLast = fmap (AVLTree *** whValue) . popLastWithHeightAVL . runAVLTree
 
 isAVLBTH :: BinaryTree (WithHeight a) -> Bool
 isAVLBTH Empty = True
-isAVLBTH b@(Branch _ l r) = isAVLBTH l && isAVLBTH r && ok b
+isAVLBTH b@(Branch l _ r) = isAVLBTH l && isAVLBTH r && ok b
   where
     ok t = fst (analyseBalance t) == Balanced
 
@@ -119,7 +119,7 @@ data TallerSide
 
 analyseBalance :: BinaryTree (WithHeight a) -> (IsBalanced, TallerSide)
 analyseBalance Empty = (Balanced, NeitherTaller)
-analyseBalance (Branch _ l r) =
+analyseBalance (Branch l _ r) =
   let lh = readHeight l
       rh = readHeight r
       isBalanced =
@@ -135,8 +135,8 @@ analyseBalance (Branch _ l r) =
 
 rebalanceOnce :: BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
 rebalanceOnce Empty = Empty
-rebalanceOnce (Branch n Empty Empty) = Branch n Empty Empty
-rebalanceOnce b@(Branch n l r) =
+rebalanceOnce (Branch Empty n Empty) = Branch Empty n Empty
+rebalanceOnce b@(Branch l n r) =
   let errTooMuch = error "Imbalance in tree got out of control"
       errNonsenseAnalysis =
         error
@@ -147,12 +147,12 @@ rebalanceOnce b@(Branch n l r) =
         (_, LeftTaller) ->
           case analyseBalance l of
             (NotBalanced, _) -> errTooMuch
-            (_, RightTaller) -> rotateRight (branchWithNewHeight n (rotateLeft l) r)
+            (_, RightTaller) -> rotateRight (branchWithNewHeight (rotateLeft l) n r)
             (_, _) -> rotateRight b
         (_, RightTaller) ->
           case analyseBalance r of
             (NotBalanced, _) -> errTooMuch
-            (_, LeftTaller) -> rotateLeft (branchWithNewHeight n l (rotateRight r))
+            (_, LeftTaller) -> rotateLeft (branchWithNewHeight l n (rotateRight r))
             (_, _) -> rotateLeft b
 
 insertWithHeight ::

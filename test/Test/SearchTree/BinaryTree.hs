@@ -67,10 +67,10 @@ prop_abstractInsertImplementsOldInsert c t = insert c t == oldInsert c t
   where
     oldInsert :: (Ord a) => a -> BinaryTree a -> BinaryTree a
     oldInsert a Empty = leaf a
-    oldInsert a (Branch n l r) =
+    oldInsert a (Branch l n r) =
       if a < n
-        then Branch n (oldInsert a l) r
-        else Branch n l (oldInsert a r)
+        then Branch (oldInsert a l) n r
+        else Branch l n (oldInsert a r)
 
 prop_insertMaintainsSearchProperty :: Char -> BinaryTree Char -> Bool
 prop_insertMaintainsSearchProperty x t = searchProperty (insert x t)
@@ -91,7 +91,7 @@ prop_subtreesAreSubgraphs :: BinaryTree Int -> Bool
 prop_subtreesAreSubgraphs t =
   case t of
     Empty -> discard
-    Branch n l r -> l `isSubgraphOf` t && r `isSubgraphOf` t
+    Branch l n r -> l `isSubgraphOf` t && r `isSubgraphOf` t
 
 prop_zipUnzipYieldsSubgraphs :: BinaryTree Int -> BinaryTree Char -> Bool
 prop_zipUnzipYieldsSubgraphs ti tc =
@@ -100,14 +100,14 @@ prop_zipUnzipYieldsSubgraphs ti tc =
 
 inorderTraversal' :: BinaryTree a -> [a]
 inorderTraversal' Empty = []
-inorderTraversal' (Branch n l r) = inorderTraversal' l ++ [n] ++ inorderTraversal' r
+inorderTraversal' (Branch l n r) = inorderTraversal' l ++ [n] ++ inorderTraversal' r
 
 prop_inorderTraversal :: BinaryTree Int -> Bool
 prop_inorderTraversal t = inorderTraversal t == inorderTraversal' t
 
 preorderTraversal' :: BinaryTree a -> [a]
 preorderTraversal' Empty = []
-preorderTraversal' (Branch n l r) = [n] ++ preorderTraversal' l ++ preorderTraversal' r
+preorderTraversal' (Branch l n r) = [n] ++ preorderTraversal' l ++ preorderTraversal' r
 
 prop_preorderTraversal :: BinaryTree Int -> Bool
 prop_preorderTraversal t = preorderTraversal t == preorderTraversal' t
