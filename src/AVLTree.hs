@@ -4,7 +4,8 @@ import BinaryTree (BinaryTree(Branch, Empty), BranchCons, EmptyCons, TreeAlgebra
 import qualified BinaryTree as BT
 
 import Control.Applicative ((<|>))
-import Control.Arrow (first, second)
+import Control.Arrow ((***), first, second)
+import Data.Coerce
 import Data.Function (on)
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
@@ -50,14 +51,14 @@ branchWithHeight n l r =
 branchWithNewHeight :: BranchCons (WithHeight a) (BinaryTree (WithHeight a))
 branchWithNewHeight = branchWithHeight . whValue
 
-branchWithNewHeightAndRebalancing :: BranchCons (WithHeight a) (BinaryTree (WithHeight a))
-branchWithNewHeightAndRebalancing n l r = rebalanceOnce (branchWithNewHeight n l r)
+branchWithNewHeightAVL :: BranchCons (WithHeight a) (BinaryTree (WithHeight a))
+branchWithNewHeightAVL n l r = rebalanceOnce (branchWithNewHeight n l r)
 
 withHeightAlgebra :: TreeAlgebra (WithHeight a) (BinaryTree (WithHeight a))
 withHeightAlgebra = (Empty, branchWithNewHeight)
 
-withHeightAndRebalancingAlgebra :: TreeAlgebra (WithHeight a) (BinaryTree (WithHeight a))
-withHeightAndRebalancingAlgebra = (Empty, branchWithNewHeightAndRebalancing)
+withHeightAVLAlgebra :: TreeAlgebra (WithHeight a) (BinaryTree (WithHeight a))
+withHeightAVLAlgebra = (Empty, branchWithNewHeightAVL)
 
 treeWithHeight :: BinaryTree a -> BinaryTree (WithHeight a)
 treeWithHeight = BT.foldTree branchWithHeight Empty
@@ -68,45 +69,32 @@ treeWithoutHeight = fmap whValue
 treeWithNewHeight :: BinaryTree (WithHeight t) -> BinaryTree (WithHeight t)
 treeWithNewHeight = BT.foldTree branchWithNewHeight Empty
 
-empty :: AVLTree a
-empty = AVLTree Empty
-
-branch :: a -> AVLTree a -> AVLTree a -> AVLTree a
-branch n (AVLTree l) (AVLTree r) =
-  let h = wouldBeHeight (readHeight l) (readHeight r)
-   in AVLTree (Branch (WithHeight h n) l r)
-
-leaf :: a -> AVLTree a
-leaf n = branch n empty empty
-
-insertWithHeight ::
-     (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
-insertWithHeight = BT.abstractInsert withHeightAlgebra
-
 popHeadWithHeight :: BinaryTree (WithHeight a) -> Maybe (WithHeight a, BinaryTree (WithHeight a))
 popHeadWithHeight = BT.abstractPopHead branchWithNewHeight
 
 popHeadWithHeightAVL :: BinaryTree (WithHeight a) -> Maybe (WithHeight a, BinaryTree (WithHeight a))
-popHeadWithHeightAVL = BT.abstractPopHead branchWithNewHeightAndRebalancing
+popHeadWithHeightAVL = BT.abstractPopHead branchWithNewHeightAVL
+
+popHead :: AVLTree a -> Maybe (a, AVLTree a)
+popHead = fmap (whValue *** AVLTree) . popHeadWithHeightAVL . runAVLTree
 
 popLastWithHeight :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a), WithHeight a)
 popLastWithHeight = BT.abstractPopLast branchWithNewHeight
 
 popLastWithHeightAVL :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a), WithHeight a)
-popLastWithHeightAVL = BT.abstractPopLast branchWithNewHeightAndRebalancing
+popLastWithHeightAVL = BT.abstractPopLast branchWithNewHeightAVL
 
-deleteWithHeight ::
-     (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
-deleteWithHeight = BT.abstractDelete withHeightAlgebra
+popLast :: AVLTree a -> Maybe (AVLTree a, a)
+popLast = fmap (AVLTree *** whValue) . popLastWithHeightAVL . runAVLTree
 
-isAVL :: (Ord a) => BinaryTree a -> Bool
-isAVL t = go (treeWithHeight t)
+isAVLBTH :: BinaryTree (WithHeight a) -> Bool
+isAVLBTH Empty = True
+isAVLBTH b@(Branch _ l r) = isAVLBTH l && isAVLBTH r && ok b
   where
-    go :: BinaryTree (WithHeight a) -> Bool
-    go Empty = True
-    go b@(Branch _ l r) = nodeAdmissable b && go l && go r
-    nodeAdmissable :: BinaryTree (WithHeight a) -> Bool
-    nodeAdmissable t = fst (analyseBalance t) == Balanced
+    ok t = fst (analyseBalance t) == Balanced
+
+validAVL :: AVLTree a -> Bool
+validAVL (AVLTree t) = isAVLBTH t
 
 rotateLeftMaybe :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
 rotateLeftMaybe = BT.abstractRotateLeftMaybe branchWithNewHeight
@@ -169,22 +157,30 @@ rebalanceOnce b@(Branch n l r) =
             (_, LeftTaller) -> rotateLeft (branchWithNewHeight n l (rotateRight r))
             (_, _) -> rotateLeft b
 
+insertWithHeight ::
+     (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
+insertWithHeight = BT.abstractInsert withHeightAlgebra
+
 insertWithHeightAVL ::
      (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
-insertWithHeightAVL = BT.abstractInsert withHeightAndRebalancingAlgebra
+insertWithHeightAVL = BT.abstractInsert withHeightAVLAlgebra
+
+insert :: (Ord a) => a -> AVLTree a -> AVLTree a
+insert x (AVLTree t) = AVLTree (insertWithHeightAVL (WithHeight undefined x) t)
+
+deleteWithHeight ::
+     (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
+deleteWithHeight = BT.abstractDelete withHeightAlgebra
 
 deleteWithHeightAVL ::
      (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
-deleteWithHeightAVL = BT.abstractDelete withHeightAndRebalancingAlgebra
+deleteWithHeightAVL = BT.abstractDelete withHeightAVLAlgebra
 
-liftBT :: (BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)) -> AVLTree a -> AVLTree a
-liftBT f = AVLTree . f . runAVLTree
-
-insert :: (Ord a) => a -> AVLTree a -> AVLTree a
-insert = liftBT . insertWithHeightAVL . WithHeight undefined
+delete :: (Ord a) => a -> AVLTree a -> Maybe (AVLTree a)
+delete x (AVLTree t) = AVLTree <$> deleteWithHeightAVL (WithHeight undefined x) t
 
 fromList :: (Ord a) => [a] -> AVLTree a
-fromList = AVLTree . List.foldl' (flip insertWithHeightAVL) Empty . fmap (WithHeight undefined)
+fromList = List.foldl' (flip insert) (AVLTree Empty)
 
 instance (Arbitrary a, Ord a) => Arbitrary (AVLTree a) where
   arbitrary = fromList <$> arbitrary
