@@ -30,6 +30,12 @@ newtype AVLTree a = AVLTree
   { runAVLTree :: BinaryTree (WithHeight a)
   } deriving (Show, Eq, Functor, Foldable)
 
+empty :: AVLTree a
+empty = AVLTree Empty
+
+null :: AVLTree a -> Bool
+null = BT.null . runAVLTree
+
 emptyTreeHeight :: Int
 emptyTreeHeight = -1
 
@@ -73,6 +79,9 @@ treeWithoutHeight = fmap whValue
 treeWithNewHeight :: BinaryTree (WithHeight t) -> BinaryTree (WithHeight t)
 treeWithNewHeight = BT.foldTree branchWithNewHeight Empty
 
+head :: AVLTree a -> Maybe a
+head = fmap whValue . BT.head . runAVLTree
+
 popHeadWithHeight :: BinaryTree (WithHeight a) -> Maybe (WithHeight a, BinaryTree (WithHeight a))
 popHeadWithHeight = BT.abstractPopHead branchWithNewHeight
 
@@ -81,6 +90,9 @@ popHeadWithHeightAVL = BT.abstractPopHead branchWithNewHeightAVL
 
 popHead :: AVLTree a -> Maybe (a, AVLTree a)
 popHead = fmap (whValue *** AVLTree) . popHeadWithHeightAVL . runAVLTree
+
+last :: AVLTree a -> Maybe a
+last = fmap whValue . BT.last . runAVLTree
 
 popLastWithHeight :: BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a), WithHeight a)
 popLastWithHeight = BT.abstractPopLast branchWithNewHeight

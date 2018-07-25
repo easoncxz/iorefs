@@ -16,6 +16,9 @@ data BinaryTree a
            (BinaryTree a)
   deriving (Show, Eq, Functor, Foldable)
 
+empty :: BinaryTree a
+empty = Empty
+
 null :: BinaryTree a -> Bool
 null Empty = True
 null (Branch _ _ _) = False
