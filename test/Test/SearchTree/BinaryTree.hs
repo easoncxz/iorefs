@@ -59,7 +59,7 @@ prop_searchPropertyStepwise xs =
 
 prop_elem :: [Int] -> Int -> Bool
 prop_elem xs x =
-  let tree = fromList xs
+  let tree = SearchTree.fromList xs :: BinaryTree Int
    in SearchTree.elem x tree == Prelude.elem x xs
 
 prop_abstractInsertImplementsOldInsert :: Char -> BinaryTree Char -> Bool

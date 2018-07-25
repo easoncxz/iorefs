@@ -92,12 +92,6 @@ findImpl a (Branch l n r) =
     EQ -> Just n
     GT -> find a r
 
-fromList :: (Ord a) => [a] -> BinaryTree a
-fromList = List.foldl' (flip insert) Empty
-
-instance (Arbitrary a, Ord a) => Arbitrary (BinaryTree a) where
-  arbitrary = fromList <$> arbitrary
-
 abstractDelete ::
      (Ord a) => TreeAlgebra a (BinaryTree a) -> a -> BinaryTree a -> Maybe (BinaryTree a)
 abstractDelete _ _ Empty = Nothing
@@ -154,6 +148,9 @@ rotateRightMaybe = abstractRotateRightMaybe Branch
 
 rotateRight :: BinaryTree a -> BinaryTree a
 rotateRight t = fromMaybe t (rotateRightMaybe t)
+
+instance (Ord a, Arbitrary a) => Arbitrary (BinaryTree a) where
+  arbitrary = fromList <$> arbitrary
 
 instance SearchTree BinaryTree where
   empty = Empty

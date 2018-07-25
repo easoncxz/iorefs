@@ -173,9 +173,6 @@ deleteWithHeightAVL ::
      (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
 deleteWithHeightAVL = BT.abstractDelete withHeightAVLAlgebra
 
-fromList :: (Ord a) => [a] -> AVLTree a
-fromList = List.foldl' (flip insert) (AVLTree Empty)
-
 instance (Arbitrary a, Ord a) => Arbitrary (AVLTree a) where
   arbitrary = fromList <$> arbitrary
 

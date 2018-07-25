@@ -2,6 +2,8 @@ module SearchTree.Class where
 
 import Data.Maybe (isJust)
 
+import Test.QuickCheck (Arbitrary(arbitrary), Gen)
+
 class (Foldable t, Functor t) =>
       SearchTree (t :: * -> *)
   where
@@ -16,3 +18,5 @@ class (Foldable t, Functor t) =>
   last :: t a -> Maybe a
   popHead :: t a -> Maybe (a, t a)
   popLast :: t a -> Maybe (t a, a)
+  fromList :: Ord a => [a] -> t a
+  fromList = foldr insert empty
