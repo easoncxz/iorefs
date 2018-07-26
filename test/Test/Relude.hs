@@ -15,10 +15,10 @@ prop_listAppend2 :: [Int] -> [Int] -> Bool
 prop_listAppend2 xs ys = xs ++ ys == xs `listAppend2` ys
 
 prop_myFoldL :: [String] -> Bool
-prop_myFoldL xs = myFoldL tell "_" xs == foldl tell "_" xs
+prop_myFoldL xs = myFoldL tells id (map (++) xs) "_" == foldl tells id (map (++) xs) "_"
 
 prop_myFoldR :: [String] -> Bool
-prop_myFoldR xs = myFoldR tell "_" xs == foldr tell "_" xs
+prop_myFoldR xs = myFoldR tells id (map (++) xs) "_" == foldr tells id (map (++) xs) "_"
 
 prop_diffConcat :: [[Int]] -> Bool
 prop_diffConcat ss = diffConcat ss == concat ss

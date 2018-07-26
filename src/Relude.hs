@@ -33,6 +33,9 @@ diffConcat xs = foldr (.) id (fmap (++) xs) []
 tell :: String -> String -> String
 tell a b = "(" ++ a ++ " . " ++ b ++ ")"
 
+tells :: ShowS -> ShowS -> ShowS
+tells a b = shows "(" . a . shows " . " . b . shows ")"
+
 myFoldL :: (b -> a -> b) -> b -> [a] -> b
 myFoldL f z [] = z
 myFoldL f z (x:xs) = myFoldL f (f z x) xs
