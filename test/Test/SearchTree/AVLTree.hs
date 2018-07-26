@@ -5,11 +5,18 @@ import SearchTree.BinaryTree (BinaryTree(Branch, Empty))
 import qualified SearchTree.BinaryTree as BT
 import qualified SearchTree.Class as SearchTree
 
+import qualified Test.SearchTree as SearchTree
 import Test.SearchTree.BinaryTree (searchProperty)
 
 import Control.Arrow (first, second)
 import Data.Foldable
 import Data.Maybe (fromMaybe)
+import Data.Proxy
+
+import Test.QuickCheck (Property)
+
+prop_searchTreeProperty :: Property
+prop_searchTreeProperty = SearchTree.contract (Proxy :: Proxy AVLTree) (Proxy :: Proxy Int)
 
 prop_withHeightZipVsFold :: BinaryTree Char -> Bool
 prop_withHeightZipVsFold t = BT.zipTreeWith WithHeight (heightTree t) t == treeWithHeight t
