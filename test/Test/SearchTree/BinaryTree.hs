@@ -15,55 +15,14 @@ import qualified Data.Tuple as Tuple
 import Safe (lastMay)
 import Test.QuickCheck (Gen, NonEmptyList(NonEmpty), Property, (==>), discard, elements)
 
-prop_foldTree :: BinaryTree Int -> Bool
-prop_foldTree t = foldTree Branch Empty t == t
+prop_foldTreeIdentity :: BinaryTree Int -> Bool
+prop_foldTreeIdentity t = foldTree Branch Empty t == t
+
+prop_toListMatchesInorderTraversal :: BinaryTree Int -> Bool
+prop_toListMatchesInorderTraversal t = toList t == inorderTraversal t
 
 prop_searchTreeContract :: Property
 prop_searchTreeContract = SearchTree.contract (Proxy :: Proxy BinaryTree) (Proxy :: Proxy Int)
-
-prop_lastMatchesInorderTraversal :: BinaryTree Int -> Bool
-prop_lastMatchesInorderTraversal t = SearchTree.last t == lastMay (inorderTraversal t)
-
-prop_popHeadMatchesInorderTraversal :: BinaryTree Int -> Bool
-prop_popHeadMatchesInorderTraversal t =
-  fmap (second inorderTraversal) (SearchTree.popHead t) == List.uncons (inorderTraversal t)
-
-prop_popHeadPreservesSearchProperty :: BinaryTree Char -> Bool
-prop_popHeadPreservesSearchProperty t =
-  case SearchTree.popHead t of
-    Nothing -> True
-    Just (_, t') -> searchProperty t'
-
-unsnoc :: [a] -> Maybe ([a], a)
-unsnoc xs =
-  case Seq.fromList xs of
-    Seq.Empty -> Nothing
-    init Seq.:|> last -> Just (toList init, last)
-
-prop_popLastMatchesInorderTraversal :: BinaryTree Int -> Bool
-prop_popLastMatchesInorderTraversal tree =
-  fmap (first inorderTraversal) (SearchTree.popLast tree) == unsnoc (inorderTraversal tree)
-
-prop_popLastPreservesSearchProperty :: BinaryTree Char -> Bool
-prop_popLastPreservesSearchProperty t =
-  case SearchTree.popLast t of
-    Nothing -> True
-    Just (t', _) -> searchProperty t'
-
-searchProperty :: (Ord a) => BinaryTree a -> Bool
-searchProperty tree =
-  let inorder = inorderTraversal tree
-   in inorder == List.sort inorder
-
-prop_searchPropertyStepwise :: [Char] -> Bool
-prop_searchPropertyStepwise xs =
-  let steps = scanr SearchTree.insert Empty xs
-   in all searchProperty steps
-
-prop_elem :: [Int] -> Int -> Bool
-prop_elem xs x =
-  let tree = SearchTree.fromList xs :: BinaryTree Int
-   in SearchTree.elem x tree == Prelude.elem x xs
 
 prop_abstractInsertImplementsOldInsert :: Char -> BinaryTree Char -> Bool
 prop_abstractInsertImplementsOldInsert c t = SearchTree.insert c t == oldInsert c t
@@ -75,15 +34,8 @@ prop_abstractInsertImplementsOldInsert c t = SearchTree.insert c t == oldInsert 
         then Branch (oldInsert a l) n r
         else Branch l n (oldInsert a r)
 
-prop_insertMaintainsSearchProperty :: Char -> BinaryTree Char -> Bool
-prop_insertMaintainsSearchProperty x t = searchProperty (SearchTree.insert x t)
-
-prop_deleteMaintainsSearchProperty :: BinaryTree Char -> Char -> Bool
-prop_deleteMaintainsSearchProperty tree x =
-  case (x `SearchTree.elem` tree, SearchTree.delete x tree) of
-    (False, Nothing) -> True
-    (True, Just small) -> searchProperty small
-    _ -> False
+searchProperty :: (Ord a) => BinaryTree a -> Bool
+searchProperty t = toList t == List.sort (toList t)
 
 prop_zipUnzip :: BinaryTree Int -> BinaryTree Int -> Bool
 prop_zipUnzip x y =
@@ -125,6 +77,3 @@ prop_rotateBackAndForthAgain :: BinaryTree Char -> Bool
 prop_rotateBackAndForthAgain t =
   fromMaybe t (rotateLeftMaybe =<< rotateRightMaybe t) == t &&
   fromMaybe t (rotateRightMaybe =<< rotateLeftMaybe t) == t
-
-prop_foldableMatchesInorderTraversal :: BinaryTree Char -> Bool
-prop_foldableMatchesInorderTraversal t = toList t == inorderTraversal t
