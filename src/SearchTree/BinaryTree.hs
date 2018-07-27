@@ -2,9 +2,9 @@ module SearchTree.BinaryTree where
 
 import SearchTree.Class (SearchTree(..))
 
-import Control.DeepSeq (NFData)
 import Control.Applicative
 import Control.Arrow (first, second)
+import Control.DeepSeq (NFData)
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
 import GHC.Generics (Generic)
@@ -81,12 +81,12 @@ rootNext Empty = Nothing
 rootNext (Branch _ _ Empty) = Nothing
 rootNext (Branch _ _ r) = head r
 
-abstractInsert :: (Ord a) => TreeAlgebra a z -> a -> BinaryTree a -> z
-abstractInsert (empty, branch) x Empty = branch empty x empty
-abstractInsert (empty, branch) x (Branch l n r) =
+abstractInsert :: (Ord a) => BranchCons a (BinaryTree a) -> a -> BinaryTree a -> BinaryTree a
+abstractInsert branch x Empty = branch Empty x Empty
+abstractInsert branch x (Branch l n r) =
   if x < n
-    then branch (abstractInsert (empty, branch) x l) n (foldTree branch empty r)
-    else branch (foldTree branch empty l) n (abstractInsert (empty, branch) x r)
+    then branch (abstractInsert branch x l) n r
+    else branch l n (abstractInsert branch x r)
 
 findImpl :: (Ord a) => a -> BinaryTree a -> Maybe a
 findImpl a Empty = Nothing
@@ -97,16 +97,16 @@ findImpl a (Branch l n r) =
     GT -> find a r
 
 abstractDelete ::
-     (Ord a) => TreeAlgebra a (BinaryTree a) -> a -> BinaryTree a -> Maybe (BinaryTree a)
+     (Ord a) => BranchCons a (BinaryTree a) -> a -> BinaryTree a -> Maybe (BinaryTree a)
 abstractDelete _ _ Empty = Nothing
-abstractDelete (empty, branch) x (Branch l n r) =
+abstractDelete branch x (Branch l n r) =
   case compare x n of
-    LT -> branch <$> abstractDelete (empty, branch) x l <*> pure n <*> pure r
+    LT -> branch <$> abstractDelete branch x l <*> pure n <*> pure r
     EQ ->
       let fromR = (\(rMin, r') -> branch l rMin r') <$> abstractPopHead branch r
           fromL = (\(l', lMax) -> branch l' lMax r) <$> abstractPopLast branch l
-       in fromR <|> fromL <|> Just empty
-    GT -> branch l n <$> abstractDelete (empty, branch) x r
+       in fromR <|> fromL <|> Just Empty
+    GT -> branch l n <$> abstractDelete branch x r
 
 zipTreeWith :: (a -> b -> c) -> BinaryTree a -> BinaryTree b -> BinaryTree c
 zipTreeWith _ Empty _ = Empty
@@ -162,8 +162,8 @@ instance SearchTree BinaryTree where
     case t of
       Empty -> True
       Branch _ _ _ -> False
-  insert = abstractInsert idTreeAlgebra
-  delete = abstractDelete idTreeAlgebra
+  insert = abstractInsert Branch
+  delete = abstractDelete Branch
   find = findImpl
   head = foldTree leftOrSelf Nothing
     where

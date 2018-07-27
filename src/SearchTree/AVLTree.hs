@@ -164,19 +164,19 @@ rebalanceOnce b@(Branch l n r) =
 
 insertWithHeight ::
      (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
-insertWithHeight = BT.abstractInsert withHeightAlgebra
+insertWithHeight = BT.abstractInsert branchWithNewHeight
 
 insertWithHeightAVL ::
      (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> BinaryTree (WithHeight a)
-insertWithHeightAVL = BT.abstractInsert withHeightAVLAlgebra
+insertWithHeightAVL = BT.abstractInsert branchWithNewHeightAVL
 
 deleteWithHeight ::
      (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
-deleteWithHeight = BT.abstractDelete withHeightAlgebra
+deleteWithHeight = BT.abstractDelete branchWithNewHeight
 
 deleteWithHeightAVL ::
      (Ord a) => WithHeight a -> BinaryTree (WithHeight a) -> Maybe (BinaryTree (WithHeight a))
-deleteWithHeightAVL = BT.abstractDelete withHeightAVLAlgebra
+deleteWithHeightAVL = BT.abstractDelete branchWithNewHeightAVL
 
 instance (Arbitrary a, Ord a) => Arbitrary (AVLTree a) where
   arbitrary = fromList <$> arbitrary
