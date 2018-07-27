@@ -2,10 +2,12 @@ module SearchTree.BinaryTree where
 
 import SearchTree.Class (SearchTree(..))
 
+import Control.DeepSeq (NFData)
 import Control.Applicative
 import Control.Arrow (first, second)
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
+import GHC.Generics (Generic)
 import Prelude hiding (head, last, tail)
 
 import Test.QuickCheck (Arbitrary(arbitrary), Property, (==>), conjoin, discard)
@@ -15,7 +17,9 @@ data BinaryTree a
   | Branch (BinaryTree a)
            a
            (BinaryTree a)
-  deriving (Show, Eq, Functor, Foldable)
+  deriving (Show, Eq, Functor, Foldable, Generic)
+
+instance NFData a => NFData (BinaryTree a)
 
 leaf :: a -> BinaryTree a
 leaf n = Branch Empty n Empty

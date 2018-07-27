@@ -25,6 +25,7 @@ dependencies:
 - base >= 4.7 && < 5
 - containers
 - criterion
+- deepseq
 - gauge
 - pretty-simple
 - pretty-simple
@@ -37,6 +38,7 @@ dependencies:
 
 default-extensions:
 - BangPatterns
+- DeriveGeneric
 - DeriveFoldable
 - DeriveFunctor
 - FlexibleContexts

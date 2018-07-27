@@ -7,10 +7,12 @@ import qualified SearchTree.Class as SearchTree
 
 import Control.Applicative ((<|>))
 import Control.Arrow ((***), first, second)
+import Control.DeepSeq (NFData(rnf))
 import Data.Coerce
 import Data.Function (on)
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
+import GHC.Generics (Generic)
 
 import Test.QuickCheck (Arbitrary, arbitrary)
 
@@ -18,6 +20,9 @@ data WithHeight a = WithHeight
   { whHeight :: Int
   , whValue :: a
   } deriving (Show, Eq)
+
+instance NFData a => NFData (WithHeight a) where
+  rnf = rnf . whValue
 
 instance Ord a => Ord (WithHeight a) where
   compare = compare `on` whValue
@@ -30,7 +35,7 @@ instance Foldable WithHeight where
 
 newtype AVLTree a = AVLTree
   { runAVLTree :: BinaryTree (WithHeight a)
-  } deriving (Show, Eq, Functor, Foldable)
+  } deriving (Show, Eq, Functor, Foldable, Generic, NFData)
 
 emptyTreeHeight :: Int
 emptyTreeHeight = -1

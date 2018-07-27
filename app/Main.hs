@@ -1,6 +1,6 @@
 module Main where
 
-import QueueBenchmarking
+import SearchTree.Benchmarking (benchMain)
 
 main :: IO ()
 main = benchMain
