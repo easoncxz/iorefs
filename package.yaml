@@ -27,6 +27,7 @@ dependencies:
 - criterion
 - deepseq
 - gauge
+- mtl
 - pretty-simple
 - pretty-simple
 - primitive
