@@ -17,6 +17,10 @@ typedef struct DoublyNode Node;
 
 typedef struct DoublyList List;
 
+int isEmpty(List l) {
+  return l.head == NULL && l.last == NULL;
+}
+
 List insertBack(int val, List l) {
   Node *fresh = (Node *) malloc(sizeof (Node));
   *fresh = (Node) {
@@ -36,6 +40,22 @@ List insertBack(int val, List l) {
       .last = fresh
     };
   }
+}
+
+Node *popBack(List *l) {
+  Node *last = l->last;
+  if (last == NULL) {
+    // 0-element list; do nothing
+  } else {
+    l->last = last->prev;
+    if (last->prev == NULL) {
+      // 1-element list; head changes
+      l->head = NULL;
+    } else {
+      last->prev->next = NULL;
+    }
+  }
+  return last;
 }
 
 List insertFront(int val, List l) {
@@ -108,6 +128,12 @@ int main(int argc, char *argv[]) {
   int xs[] = {1,3,2,4,5};
   List l = fromArray(5, xs);
   printListFromHead(l);
+  while (!isEmpty(l)) {
+    Node *last = popBack(&l);
+    printf("last: %d\n", last->val);
+    printListFromHead(l);
+    free(last);
+  }
   freeList(l);
   return 0;
 }
