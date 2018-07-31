@@ -54,16 +54,16 @@ Node *fromArray(int xs[], int count) {
 }
 
 Node *removeElements(Node *head, int val) {
-    for (Node **pcurrent = &head; *pcurrent != NULL; ) {
-        if ((*pcurrent)->val == val) {
-          Node *next = (*pcurrent)->next;
-          free(*pcurrent);
-          *pcurrent = next;
-        } else {
-          pcurrent = &(*pcurrent)->next;
-        }
+  for (Node **pcurrent = &head; *pcurrent != NULL; ) {
+    if ((*pcurrent)->val == val) {
+      Node *next = (*pcurrent)->next;
+      free(*pcurrent);
+      *pcurrent = next;
+    } else {
+      pcurrent = &(*pcurrent)->next;
     }
-    return head;
+  }
+  return head;
 }
 
 Node *removeElementsRec(Node *head, int val) {
@@ -103,7 +103,7 @@ Node *removeElements2(Node *head, int val) {
 
 int main (int argc, char *argv[]) {
   int xs[] = {1, 2, 6, 3, 4, 5, 6};
-  Node *l = removeElements2(fromArray(xs, 7), 6);
+  Node *l = removeElements(fromArray(xs, 7), 6);
   printList(l);
   freeList(l);
   printf("sizeof int: %lu\n", sizeof (int));

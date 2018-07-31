@@ -104,6 +104,24 @@ List reverseInPlace(List l) {
   };
 }
 
+List deleteAll(int val, List l) {
+  for (Node **pcurr = &l.head; *pcurr != NULL; ) {
+    if ((*pcurr)->val == val) {
+      Node *next = (*pcurr)->next;
+      if (next == NULL) { // last changes
+        l.last = (*pcurr)->prev;  // fix backward pointer
+      } else { // last preserves
+        next->prev = (*pcurr)->prev;  // fix backward pointer
+      }
+      free(*pcurr);
+      *pcurr = next;            // fix forward pointer
+    } else {
+      pcurr = &(*pcurr)->next;
+    }
+  }
+  return l;
+}
+
 List fromArray(int count, int xs[]) {
   List l = {
     .head = NULL,
@@ -137,15 +155,11 @@ void freeList(List l) {
 int main(int argc, char *argv[]) {
   printf("sizeof Node: %lu\n", sizeof (Node));
   printf("sizeof List: %lu\n", sizeof (List));
-  int xs[] = {1,3,2,4,5};
-  List l = fromArray(5, xs);
+  int xs[] = {1,3,2,4,5,4,6,7,4};
+  List l = fromArray((int) (sizeof (xs)) / (sizeof (int)), xs);
   printListFromHead(l);
-  while (!isEmpty(l)) {
-    Node *head = popFront(&l);
-    printf("head: %d\n", head->val);
-    printListFromHead(l);
-    free(head);
-  }
+  l = deleteAll(4, l);
+  printListFromHead(l);
   freeList(l);
   return 0;
 }
