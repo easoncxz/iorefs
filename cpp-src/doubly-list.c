@@ -128,7 +128,6 @@ List deleteAllNoPP(int val, List l) {
     .prev = NULL,
     .next = l.head
   };
-  l.head->prev = &dummy;
   {
     Node *prev = &dummy;
     Node *curr = dummy.next;
@@ -136,12 +135,12 @@ List deleteAllNoPP(int val, List l) {
       if (curr->val == val) {
         Node *next = curr->next;
         prev->next = next;  // fix forward link
-        if (curr->next == NULL) {
+        if (next == NULL) {
           l.last = prev;  // fix backwards link
           free(curr);
           curr = next;
         } else {
-          curr->next->prev = prev;  // fix backwards link
+          next->prev = prev;  // fix backwards link
           free(curr);
           curr = next;
         }
@@ -152,7 +151,6 @@ List deleteAllNoPP(int val, List l) {
     }
   }
   l.head = dummy.next;
-  l.head->prev = NULL;
   return l;
 }
 
@@ -194,20 +192,24 @@ int readLineOfInts(int xsLength, int xs[]) {
     scanf("%d%c", &xs[i], &sep);
     i++;
   }
+  printf("Finished reading %d int's\n", i);
   return i;
 }
 
 int main(int argc, char *argv[]) {
+  int xs[] = {};
+  int xsLength = (int) (sizeof (xs)) / (sizeof (int));
+
   printf("sizeof Node: %lu\n", sizeof (Node));
   printf("sizeof List: %lu\n", sizeof (List));
+  printf("sizeof int: %lu\n", sizeof (int));
+  printf("sizeof xs: %lu\n", sizeof (xs));
 
-  int xs[10000];
-  int xsLength = (int) (sizeof (xs)) / (sizeof (int));
-  while (1) {
-    int n = readLineOfInts(xsLength, xs);
-    List l = fromArray(n, xs);
-    printListFromHead(l);
-    freeList(l);
-  }
+  List l = fromArray(xsLength, xs);
+  printListFromHead(l);
+  l = deleteAllNoPP(0, l);
+  printListFromHead(l);
+  freeList(l);
+
   return 0;
 }
