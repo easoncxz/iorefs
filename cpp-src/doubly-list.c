@@ -122,6 +122,40 @@ List deleteAll(int val, List l) {
   return l;
 }
 
+List deleteAllNoPP(int val, List l) {
+  Node dummy = {
+    .val = 0,
+    .prev = NULL,
+    .next = l.head
+  };
+  l.head->prev = &dummy;
+  {
+    Node *prev = &dummy;
+    Node *curr = dummy.next;
+    while (curr != NULL) {
+      if (curr->val == val) {
+        Node *next = curr->next;
+        prev->next = next;  // fix forward link
+        if (curr->next == NULL) {
+          l.last = prev;  // fix backwards link
+          free(curr);
+          curr = next;
+        } else {
+          curr->next->prev = prev;  // fix backwards link
+          free(curr);
+          curr = next;
+        }
+      } else {
+        prev = curr;
+        curr = curr->next;
+      }
+    }
+  }
+  l.head = dummy.next;
+  l.head->prev = NULL;
+  return l;
+}
+
 List fromArray(int count, int xs[]) {
   List l = {
     .head = NULL,
@@ -158,7 +192,7 @@ int main(int argc, char *argv[]) {
   int xs[] = {1,3,2,4,5,4,6,7,4};
   List l = fromArray((int) (sizeof (xs)) / (sizeof (int)), xs);
   printListFromHead(l);
-  l = deleteAll(4, l);
+  l = deleteAllNoPP(4, l);
   printListFromHead(l);
   freeList(l);
   return 0;
