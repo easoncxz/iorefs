@@ -45,17 +45,29 @@ List insertBack(int val, List l) {
 Node *popBack(List *l) {
   Node *last = l->last;
   if (last == NULL) {
-    // 0-element list; do nothing
   } else {
     l->last = last->prev;
-    if (last->prev == NULL) {
-      // 1-element list; head changes
+    if (l->last == NULL) {
       l->head = NULL;
     } else {
-      last->prev->next = NULL;
+      l->last->next = NULL;
     }
   }
   return last;
+}
+
+Node *popFront(List *l) {
+  Node *head = l->head;
+  if (head == NULL) {
+  } else {
+    l->head = head->next;
+    if (l->head == NULL) {
+      l->last = NULL;
+    } else {
+      l->head->prev = NULL;
+    }
+  }
+  return head;
 }
 
 List insertFront(int val, List l) {
@@ -129,10 +141,10 @@ int main(int argc, char *argv[]) {
   List l = fromArray(5, xs);
   printListFromHead(l);
   while (!isEmpty(l)) {
-    Node *last = popBack(&l);
-    printf("last: %d\n", last->val);
+    Node *head = popFront(&l);
+    printf("head: %d\n", head->val);
     printListFromHead(l);
-    free(last);
+    free(head);
   }
   freeList(l);
   return 0;
