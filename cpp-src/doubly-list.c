@@ -186,14 +186,28 @@ void freeList(List l) {
   }
 }
 
+int readLineOfInts(int xsLength, int xs[]) {
+  printf("Input a line of numbers: ");
+  int i = 0;
+  char sep = '?';
+  while (sep != '\n' && i < xsLength) {
+    scanf("%d%c", &xs[i], &sep);
+    i++;
+  }
+  return i;
+}
+
 int main(int argc, char *argv[]) {
   printf("sizeof Node: %lu\n", sizeof (Node));
   printf("sizeof List: %lu\n", sizeof (List));
-  int xs[] = {1,3,2,4,5,4,6,7,4};
-  List l = fromArray((int) (sizeof (xs)) / (sizeof (int)), xs);
-  printListFromHead(l);
-  l = deleteAllNoPP(4, l);
-  printListFromHead(l);
-  freeList(l);
+
+  int xs[10000];
+  int xsLength = (int) (sizeof (xs)) / (sizeof (int));
+  while (1) {
+    int n = readLineOfInts(xsLength, xs);
+    List l = fromArray(n, xs);
+    printListFromHead(l);
+    freeList(l);
+  }
   return 0;
 }
