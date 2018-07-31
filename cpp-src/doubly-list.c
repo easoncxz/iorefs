@@ -38,18 +38,52 @@ List insertBack(int val, List l) {
   }
 }
 
+List insertFront(int val, List l) {
+  Node *fresh = (Node *) malloc(sizeof (Node));
+  *fresh = (Node) {
+    .val = val,
+    .prev = NULL,
+    .next = l.head
+  };
+  if (l.head == NULL) {
+    return (List) {
+      .head = fresh,
+      .last = fresh
+    };
+  } else {
+    l.head->prev = fresh;
+    return (List) {
+      .head = fresh,
+      .last = l.last
+    };
+  }
+}
+
+List reverseInPlace(List l) {
+  for (Node *curr = l.head; curr != NULL; ) {
+    Node *next = curr->next;
+    curr->next = curr->prev;
+    curr->prev = next;
+    curr = next;
+  }
+  return (List) {
+    .head = l.last,
+    .last = l.head
+  };
+}
+
 List fromArray(int count, int xs[]) {
   List l = {
     .head = NULL,
     .last = NULL
   };
   for (int i = 0; i < count; i++) {
-    l = insertBack(xs[i], l);
+    l = insertFront(xs[i], l);
   }
-  return l;
+  return reverseInPlace(l);
 }
 
-void printList(List l) {
+void printListFromHead(List l) {
   printf("[");
   for (Node *curr = l.head; curr != NULL; curr = curr->next) {
     printf("%d", curr->val);
@@ -60,11 +94,20 @@ void printList(List l) {
   printf("]\n");
 }
 
+void freeList(List l) {
+  for (Node *curr = l.head; curr != NULL; ) {
+    Node *next = curr->next;
+    free(curr);
+    curr = next;
+  }
+}
+
 int main(int argc, char *argv[]) {
   printf("sizeof Node: %lu\n", sizeof (Node));
   printf("sizeof List: %lu\n", sizeof (List));
   int xs[] = {1,3,2,4,5};
   List l = fromArray(5, xs);
-  printList(l);
+  printListFromHead(l);
+  freeList(l);
   return 0;
 }
