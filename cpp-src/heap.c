@@ -76,24 +76,23 @@ void siftDownMaxHeap(struct Heap *h, int pos) {
   if (pos >= 1) {
     int bound = h->size + 1;
     while (pos < bound) {
-      // TODO: We need to find the larger child. Current logic is wrong
-      int nextPos = 0;  // like `Nothing`
       int left = 2 * pos;
       int right = left + 1;
-      if (right < bound && h->data[right] > h->data[pos]) {
-        int temp = h->data[pos];
-        h->data[pos] = h->data[right];
-        h->data[right] = temp;
-        nextPos = right;
+      int largestPos = pos;
+      if (right < bound && h->data[right] > h->data[largestPos]) {
+        largestPos = right;
       }
-      if (left < bound && h->data[left] > h->data[pos]) {
-        int temp = h->data[pos];
-        h->data[pos] = h->data[left];
-        h->data[left] = temp;
-        nextPos = nextPos == 0 ? left : nextPos;  // like `<|> Just left`
+      if (left < bound && h->data[left] > h->data[largestPos]) {
+        largestPos = left;
       }
-      nextPos = nextPos == 0 ? left : nextPos;  // pos is a leaf node; nextPos points out of bounds
-      pos = nextPos;
+      if (largestPos == pos) {
+        break;
+      } else {
+        int temp = h->data[pos];
+        h->data[pos] = h->data[largestPos];
+        h->data[largestPos] = temp;
+        pos = largestPos;
+      }
     }
   } else {
     printf("Error: sifting down from invalid pos: %d\n", pos);
