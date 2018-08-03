@@ -139,36 +139,20 @@ int main() {
   printf("sizeof(int): %lu\n", sizeof(int));
   printf("sizeof(int *): %lu\n", sizeof(int *));
 
-  int xs[] = {3,3,4,1,2,7,5,6,3,7};
+  int xs[] = {-4,18,-7,-15,7,-13,-26,28,-25,30,-23,-5,-1,16,18,7,24,15,-14};
   int xsLength = sizeof(xs) / sizeof(int);
 
-  // struct Heap h = {
-  //   .capacity = 2 * xsLength,
-  //   .size = xsLength,
-  //   .data = (int *) malloc(2 * xsLength * sizeof(int))
-  // };
-  // for (int i = 0; i < xsLength; i++) {
-  //   h.data[i] = xs[i];
-  // }
-  // printHeap(h);
-  // maxHeapify(&h);
-  // printHeap(h);
-
-  struct Heap h = initialiseHeap();
+  struct Heap h = {
+    .capacity = 2 * xsLength,
+    .size = xsLength,
+    .data = (int *) malloc(2 * xsLength * sizeof(int))
+  };
   for (int i = 0; i < xsLength; i++) {
-    insertMaxHeap(&h, xs[i]);
+    h.data[i] = xs[i];
   }
   printHeap(h);
-  printf("\n");
-  while (h.size > 0) {
-    struct MaybeInt m = removeMaxMaxHeap(&h);
-    if (m.isJust) {
-      printf("Removed max: %d\n", m.val);
-    } else {
-      printf("Attempted to remove from empty heap.\n");
-    }
-    printHeap(h);
-  }
+  maxHeapify(&h);
+  printHeap(h);
 
   freeHeap(&h);
   return 0;
