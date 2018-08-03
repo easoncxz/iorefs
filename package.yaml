@@ -27,6 +27,7 @@ dependencies:
 - criterion
 - deepseq
 - gauge
+- hashable
 - mtl
 - pretty-simple
 - pretty-simple
@@ -35,6 +36,7 @@ dependencies:
 - random
 - safe
 - text
+- unordered-containers
 - vector
 
 default-extensions:
