@@ -40,15 +40,21 @@ int findRightChild(int pos) {
   return findLeftChild(pos) + 1;
 }
 
-void printHeap(struct Heap h) {
-  printf("Heap(capacity=%d, size=%d): [", h.capacity, h.size);
-  for (int i = 0; i < h.size; i++) {
-    printf("%d", h.data[i]);
-    if (i < h.size - 1) {
+void printArray(int size, int xs[]) {
+  printf("[");
+  for (int i = 0; i < size; i++) {
+    printf("%d", xs[i]);
+    if (i < size - 1) {
       printf(", ");
     }
   }
-  printf("]\n");
+  printf("]");
+}
+
+void printHeap(struct Heap h) {
+  printf("Heap(capacity=%d, size=%d): ", h.capacity, h.size);
+  printArray(h.size, h.data);
+  printf("\n");
 }
 
 void growHeap(struct Heap *h) {
@@ -135,25 +141,43 @@ void maxHeapify(const struct Heap *h) {
   }
 }
 
+void myHeapsort(int size, int *xs) {
+  struct Heap h = {
+    .data = xs,
+    .capacity = size + 1, // pretend we have valid memory at position `xs[size]`
+    .size = size
+  };
+  maxHeapify(&h);
+  while (h.size > 0) {
+    struct MaybeInt mbLargestX = removeMaxMaxHeap(&h);
+    if (mbLargestX.isJust) {
+      h.data[h.size] = mbLargestX.val;
+    } else {
+      printf("Error: heap is known to be non-empty, yet we cannot removeMax?\n");
+      int *p = NULL;
+      *p = 0;
+    }
+  }
+}
+
 int main() {
   printf("sizeof(int): %lu\n", sizeof(int));
   printf("sizeof(int *): %lu\n", sizeof(int *));
 
   int xs[] = {-4,18,-7,-15,7,-13,-26,28,-25,30,-23,-5,-1,16,18,7,24,15,-14};
   int xsLength = sizeof(xs) / sizeof(int);
+  printArray(xsLength, xs);
+  printf("\n");
+  myHeapsort(xsLength, xs);
+  printArray(xsLength, xs);
+  printf("\n");
 
-  struct Heap h = {
-    .capacity = 2 * xsLength,
-    .size = xsLength,
-    .data = (int *) malloc(2 * xsLength * sizeof(int))
-  };
-  for (int i = 0; i < xsLength; i++) {
-    h.data[i] = xs[i];
-  }
-  printHeap(h);
-  maxHeapify(&h);
-  printHeap(h);
+  // struct Heap h = initialiseHeap();
+  // for (int i = 0; i < xsLength; i++) {
+  //   insertMaxHeap(&h, xs[i]);
+  // }
+  // printHeap(h);
+  // freeHeap(&h);
 
-  freeHeap(&h);
   return 0;
 }
