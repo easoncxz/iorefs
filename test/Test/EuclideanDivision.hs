@@ -2,7 +2,8 @@ module Test.EuclideanDivision where
 
 import EuclideanDivision
 
-import Test.QuickCheck
+import Data.Bits
+import Test.QuickCheck hiding ((.&.))
 
 divisionProperty :: (Int -> Int -> (Int, Int)) -> Int -> Int -> Property
 divisionProperty dm a b =
@@ -51,3 +52,10 @@ prop_divModByQuotRemIsDivMod a b = b /= 0 ==> divMod a b == divModByQuotRem a b
 
 prop_quotRemByDivModIsQuotRem :: Int -> Int -> Property
 prop_quotRemByDivModIsQuotRem a b = b /= 0 ==> quotRem a b == quotRemByDivMod a b
+
+prop_shiftingCorrespondsToDivMod :: Int -> Positive (Small Int) -> Property
+prop_shiftingCorrespondsToDivMod x (Positive (Small n)) =
+  n < 50 ==>
+  let (q, r) = divMod x (2 ^ n) -- `2 ^ n` is always >= 2
+      (qe, re) = divModEuclidean x (2 ^ n)
+   in 2 ^ n >= 2 && q == qe && r == re && q == x `shiftR` n && r == x .&. (2 ^ n - 1)
