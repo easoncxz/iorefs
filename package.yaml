@@ -52,6 +52,7 @@ default-extensions:
 - MultiParamTypeClasses
 - NamedFieldPuns
 - PartialTypeSignatures
+- RecordWildCards
 - ScopedTypeVariables
 - TypeApplications
 - TypeFamilies
@@ -80,6 +81,8 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - iorefs
+    - hspec
     - tasty
     - tasty-discover
+    - tasty-hspec
     - tasty-quickcheck
