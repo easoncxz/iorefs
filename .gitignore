@@ -1,3 +1,6 @@
 .stack-work/
 iorefs.cabal
 *~
+
+**/*.pyc
+**/__pycache__/
