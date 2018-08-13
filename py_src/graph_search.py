@@ -3,7 +3,7 @@ from pprint import pprint
 from collections import deque
 
 class Graph:
-    ''' A nested-dict matrix representation of a directed unweighted graph
+    ''' A nested-dict matrix representation of a directed graph
 
     nodes: iterable of hashables
     edges: iterable of pairs of nodes
@@ -11,36 +11,39 @@ class Graph:
 
     def __init__(self, nodes, edges):
         self.matrix = {
-                from_node: {to_node: False for to_node in nodes}
+                from_node: {to_node: None for to_node in nodes}
                     for from_node
                     in nodes
                 }
-        for (f, t) in edges:
-            self.matrix[f][t] = True
+        for (f, t, dist) in edges:
+            self.matrix[f][t] = dist
 
     def out_nodes(self, from_node):
-        return (n for n, has_edge in self.matrix[from_node].items() if has_edge)
+        return (n for n, dist in self.matrix[from_node].items() if dist is not None)
 
 
 sample_graph = Graph(
         range(9),
-        [ (1, 2)
-        , (2, 3)
-        , (3, 4)
-        , (1, 3)
-        , (3, 6)
-        , (1, 5)
-        , (5, 3)
-        , (5, 6)
-        , (6, 7)
-        , (7, 3)
-        , (5, 8)
+        [ (1, 2, True)
+        , (2, 3, True)
+        , (3, 4, True)
+        , (1, 3, True)
+        , (3, 6, True)
+        , (1, 5, True)
+        , (5, 3, True)
+        , (5, 6, True)
+        , (6, 7, True)
+        , (7, 3, True)
+        , (5, 8, True)
         ])
 
 class TodoStack:
 
     def __init__(self, *args):
         self.coll = deque(*args)
+
+    def __len__(self):
+        return len(self.coll)
 
     def add(self, elem):
         self.coll.append(elem)
@@ -53,6 +56,9 @@ class TodoQueue:
     def __init__(self, *args):
         self.coll = deque(*args)
 
+    def __len__(self):
+        return len(self.coll)
+
     def add(self, elem):
         self.coll.append(elem)
 
@@ -62,7 +68,7 @@ class TodoQueue:
 def search(Todo, graph, start):
     seen_nodes = set()
     todo = Todo([start])
-    while todo.coll:
+    while todo:
         node = todo.remove()
         if node not in seen_nodes:
             seen_nodes.add(node)
