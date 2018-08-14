@@ -56,21 +56,40 @@ search' ::
   -> MatrixGraph node edge
   -> node
   -> [node]
-search' TodoOps {todoAdd, todoDel, todoEmpty} graph@(MatrixGraph arr) start =
-  let loop :: Set node -> todo node -> [node] -> [node]
-      loop seen todo output =
+search' TodoOps {..} graph@(MatrixGraph arr) start =
+  let iter :: Set node -> todo node -> [node] -> [node]
+      iter seen todo output =
         case todoDel todo of
           Nothing -> reverse output
           Just (curr, didOne) ->
             let seeOneMore = Set.insert curr seen
              in if Set.size seeOneMore > Set.size seen
                   then let moreTodo = List.foldl' (flip todoAdd) didOne (nodesFrom graph curr)
-                        in loop seeOneMore moreTodo (curr : output)
-                  else loop seen didOne output
-   in loop Set.empty (todoAdd start todoEmpty) []
+                        in iter seeOneMore moreTodo (curr : output)
+                  else iter seen didOne output
+   in iter Set.empty (todoAdd start todoEmpty) []
+
+search ::
+     forall node edge todo. IsNode node
+  => TodoOps todo node
+  -> MatrixGraph node edge
+  -> node
+  -> [node]
+search TodoOps {..} graph@(MatrixGraph arr) start = rec Set.empty (todoAdd start todoEmpty)
+  where
+    rec :: Set node -> todo node -> [node]
+    rec seen todo =
+      case todoDel todo of
+        Nothing -> []
+        Just (curr, didOne) ->
+          let seeOneMore = Set.insert curr seen
+           in if Set.size seeOneMore > Set.size seen
+                then let moreTodo = List.foldl' (flip todoAdd) didOne (nodesFrom graph curr)
+                      in curr : rec seeOneMore moreTodo
+                else rec seen didOne
 
 depthFirstSearch :: IsNode node => MatrixGraph node edge -> node -> [node]
-depthFirstSearch = search' todoStackOps
+depthFirstSearch = search todoStackOps
 
 breadthFirstSearch :: IsNode node => MatrixGraph node edge -> node -> [node]
-breadthFirstSearch = search' todoQueueOps
+breadthFirstSearch = search todoQueueOps
