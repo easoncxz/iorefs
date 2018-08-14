@@ -8,6 +8,7 @@ import qualified Queue
 
 newtype FingerQueue a =
   FingerQueue (Seq a)
+  deriving (Show, Eq, Ord)
 
 empty :: FingerQueue a
 empty = FingerQueue Seq.empty
