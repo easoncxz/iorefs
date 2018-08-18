@@ -1,5 +1,6 @@
 
 import random
+import unittest
 
 from hypothesis import given
 import hypothesis.strategies as st
@@ -42,10 +43,9 @@ def sink_down(arr, pos):
 class MaxHeap:
 
     def __init__(self, init=None):
-        self.data = []
-        if init is not None:
-            for e in init:
-                self.insert(e)
+        self.data = [] if init is None else list(init)
+        for i in self.internal_node_indices():
+            sink_down(self.data, i)
 
     def __len__(self):
         return len(self.data)
@@ -53,9 +53,12 @@ class MaxHeap:
     def __repr__(self):
         return "<MaxHeap(data={})>".format(repr(self.data))
 
+    def internal_node_indices(self):
+        return range(parent_0(len(self.data) - 1), -1, -1)
+
     def is_valid_heap(self):
-        n = len(self.data)
-        for i in range(parent_0(n - 1), -1, -1):
+        for i in self.internal_node_indices():
+            n = len(self.data)
             l = left_child_0(i)
             r = right_child_0(i)
             if l < n and self.data[l] > self.data[i] or r < n and self.data[r] > self.data[i]:
@@ -78,18 +81,33 @@ class MaxHeap:
         else:
             return small
 
-@given(st.lists(st.integers()))
-def test_max_heap(xs):
-    h = MaxHeap()
-    for x in xs:
-        h.insert(x)
+    def empty_into(self, l):
+        del l[:]
+        while self.data:
+            l.append(self.pop())
+
+class TestMaxHeap(unittest.TestCase):
+
+    @given(st.lists(st.integers()))
+    def test_one_by_one_inserting_and_deleting(self, xs):
+        h = MaxHeap()
+        for x in xs:
+            h.insert(x)
+            assert h.is_valid_heap()
+        out = []
+        while h:
+            out.append(h.pop())
+            assert h.is_valid_heap()
+        assert out == sorted(xs, reverse=True), xs
+
+    @given(st.lists(st.integers()))
+    def test_batched_inserting_and_deleting(self, xs):
+        h = MaxHeap(init=xs)
         assert h.is_valid_heap()
-    out = []
-    while h:
-        out.append(h.pop())
-        assert h.is_valid_heap()
-    assert out == sorted(xs, reverse=True), xs
+        out = []
+        h.empty_into(out)
+        assert out == sorted(xs, reverse=True), xs
 
 if __name__ == '__main__':
     # To run tests: python3 py_src/binary_heap.py
-    test_max_heap()
+    unittest.main()
