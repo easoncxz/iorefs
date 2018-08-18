@@ -4,3 +4,6 @@ iorefs.cabal
 
 **/*.pyc
 **/__pycache__/
+
+# Python property-based testing
+.hypothesis
