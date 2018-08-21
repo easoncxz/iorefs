@@ -40,12 +40,27 @@ def sink_down(arr, pos):
             pos = largest_pos
     return pos
 
+def internal_node_indices(arr):
+    return range(parent_0(len(arr) - 1), -1, -1)
+
+def make_heap(l):
+    for i in internal_node_indices(l):
+        sink_down(l, i)
+    return l
+
+def is_valid_heap(arr):
+    for i in internal_node_indices(arr):
+        n = len(arr)
+        l = left_child_0(i)
+        r = right_child_0(i)
+        if l < n and arr[l] > arr[i] or r < n and arr[r] > arr[i]:
+            return False
+    return True
+
 class MaxHeap:
 
     def __init__(self, init=None):
-        self.data = [] if init is None else list(init)
-        for i in self.internal_node_indices():
-            sink_down(self.data, i)
+        self.data = make_heap([] if init is None else list(init))
 
     def __len__(self):
         return len(self.data)
@@ -53,24 +68,12 @@ class MaxHeap:
     def __repr__(self):
         return "<MaxHeap(data={})>".format(repr(self.data))
 
-    def internal_node_indices(self):
-        return range(parent_0(len(self.data) - 1), -1, -1)
-
-    def is_valid_heap(self):
-        for i in self.internal_node_indices():
-            n = len(self.data)
-            l = left_child_0(i)
-            r = right_child_0(i)
-            if l < n and self.data[l] > self.data[i] or r < n and self.data[r] > self.data[i]:
-                return False
-        return True
-
     def insert(self, e):
         self.data.append(e)
-        pos = bubble_up(self.data, len(self.data) - 1)
+        bubble_up(self.data, len(self.data) - 1)
 
     def peek(self):
-        return self.data[0]
+        return self.data[0] # may raise IndexError
 
     def pop(self):
         small = self.data.pop()
@@ -93,17 +96,17 @@ class TestMaxHeap(unittest.TestCase):
         h = MaxHeap()
         for x in xs:
             h.insert(x)
-            assert h.is_valid_heap()
+            assert is_valid_heap(h.data)
         out = []
         while h:
             out.append(h.pop())
-            assert h.is_valid_heap()
+            assert is_valid_heap(h.data)
         assert out == sorted(xs, reverse=True), xs
 
     @given(st.lists(st.integers()))
     def test_batched_inserting_and_deleting(self, xs):
         h = MaxHeap(init=xs)
-        assert h.is_valid_heap()
+        assert is_valid_heap(h.data)
         out = []
         h.empty_into(out)
         assert out == sorted(xs, reverse=True), xs
