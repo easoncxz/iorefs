@@ -1,4 +1,5 @@
 
+import operator
 import random
 import unittest
 
@@ -14,24 +15,27 @@ def left_child_0(pos):
 def right_child_0(pos):
     return 2 * (pos + 1)
 
-def bubble_up(arr, pos):
+def identity(x):
+    return x
+
+def bubble_up(arr, pos, key=identity):
     while pos > 0:
         parent_pos = parent_0(pos)
-        if arr[pos] > arr[parent_pos]:
+        if key(arr[pos]) > key(arr[parent_pos]):
             arr[pos], arr[parent_pos] = arr[parent_pos], arr[pos]
             pos = parent_pos
         else:
             break
     return pos
 
-def sink_down(arr, pos):
+def sink_down(arr, pos, key=identity):
     while pos < len(arr):
         largest_pos = pos
         left_pos = left_child_0(pos)
         right_pos = right_child_0(pos)
-        if left_pos < len(arr) and arr[left_pos] > arr[largest_pos]:
+        if left_pos < len(arr) and key(arr[left_pos]) > key(arr[largest_pos]):
             largest_pos = left_pos
-        if right_pos < len(arr) and arr[right_pos] > arr[largest_pos]:
+        if right_pos < len(arr) and key(arr[right_pos]) > key(arr[largest_pos]):
             largest_pos = right_pos
         if largest_pos == pos:
             break
@@ -43,24 +47,26 @@ def sink_down(arr, pos):
 def internal_node_indices(arr):
     return range(parent_0(len(arr) - 1), -1, -1)
 
-def make_heap(l):
+def make_heap(l, key=identity):
     for i in internal_node_indices(l):
-        sink_down(l, i)
+        sink_down(l, i, key=key)
     return l
 
-def is_valid_heap(arr):
+def is_valid_heap(arr, key=identity):
     for i in internal_node_indices(arr):
         n = len(arr)
         l = left_child_0(i)
         r = right_child_0(i)
-        if l < n and arr[l] > arr[i] or r < n and arr[r] > arr[i]:
+        if l < n and key(arr[l]) > key(arr[i]) or r < n and key(arr[r]) > key(arr[i]):
             return False
     return True
 
 class MaxHeap:
 
-    def __init__(self, init=None):
-        self.data = make_heap([] if init is None else list(init))
+    def __init__(self, init=None, key=identity):
+        data = [] if init is None else list(init)
+        self.data = make_heap(data, key=key)
+        self.key = key
 
     def __len__(self):
         return len(self.data)
@@ -70,7 +76,7 @@ class MaxHeap:
 
     def insert(self, e):
         self.data.append(e)
-        bubble_up(self.data, len(self.data) - 1)
+        bubble_up(self.data, len(self.data) - 1, key=self.key)
 
     def peek(self):
         return self.data[0] # may raise IndexError
@@ -79,7 +85,7 @@ class MaxHeap:
         small = self.data.pop()
         if self.data:
             biggest, self.data[0] = self.data[0], small
-            pos = sink_down(self.data, 0)
+            pos = sink_down(self.data, 0, key=self.key)
             return biggest
         else:
             return small
@@ -110,6 +116,15 @@ class TestMaxHeap(unittest.TestCase):
         out = []
         h.empty_into(out)
         assert out == sorted(xs, reverse=True), xs
+
+    @given(st.lists(st.integers()))
+    def test_max_heap_as_min_heap(self, xs):
+        key = operator.neg
+        h = MaxHeap(init=xs, key=key)
+        assert is_valid_heap(h.data, key=key)
+        out = []
+        h.empty_into(out)
+        assert out == sorted(xs), xs
 
 if __name__ == '__main__':
     # To run tests: python3 py_src/binary_heap.py
