@@ -18,24 +18,24 @@ def right_child_0(pos):
 def identity(x):
     return x
 
-def bubble_up(arr, pos, key=identity):
+def bubble_up(arr, pos, prevails):
     while pos > 0:
         parent_pos = parent_0(pos)
-        if key(arr[pos]) > key(arr[parent_pos]):
+        if prevails(arr[pos], arr[parent_pos]):
             arr[pos], arr[parent_pos] = arr[parent_pos], arr[pos]
             pos = parent_pos
         else:
             break
     return pos
 
-def sink_down(arr, pos, key=identity):
+def sink_down(arr, pos, prevails):
     while pos < len(arr):
         largest_pos = pos
         left_pos = left_child_0(pos)
         right_pos = right_child_0(pos)
-        if left_pos < len(arr) and key(arr[left_pos]) > key(arr[largest_pos]):
+        if left_pos < len(arr) and prevails(arr[left_pos], arr[largest_pos]):
             largest_pos = left_pos
-        if right_pos < len(arr) and key(arr[right_pos]) > key(arr[largest_pos]):
+        if right_pos < len(arr) and prevails(arr[right_pos], arr[largest_pos]):
             largest_pos = right_pos
         if largest_pos == pos:
             break
@@ -47,36 +47,41 @@ def sink_down(arr, pos, key=identity):
 def internal_node_indices(arr):
     return range(parent_0(len(arr) - 1), -1, -1)
 
-def make_heap(l, key=identity):
+def make_heap(l, prevails):
     for i in internal_node_indices(l):
-        sink_down(l, i, key=key)
+        sink_down(l, i, prevails)
     return l
 
-def is_valid_heap(arr, key=identity):
+def is_valid_heap(arr, prevails):
     for i in internal_node_indices(arr):
         n = len(arr)
         l = left_child_0(i)
         r = right_child_0(i)
-        if l < n and key(arr[l]) > key(arr[i]) or r < n and key(arr[r]) > key(arr[i]):
+        if l < n and prevails(arr[l], arr[i]) or (
+                r < n and prevails(arr[r], arr[i])):
             return False
     return True
 
-class MaxHeap:
+class Heap:
 
-    def __init__(self, init=None, key=identity):
-        data = [] if init is None else list(init)
-        self.data = make_heap(data, key=key)
-        self.key = key
+    def __init__(self, init=None, max_heap=True):
+        self.is_max_heap = max_heap
+        self.prevails = operator.gt if max_heap else operator.lt
+        self.data = make_heap(
+                [] if init is None else list(init),
+                self.prevails)
 
     def __len__(self):
         return len(self.data)
 
     def __repr__(self):
-        return "<MaxHeap(data={})>".format(repr(self.data))
+        return "<Heap(is_max_heap={}, data={})>".format(
+                repr(self.is_max_heap),
+                repr(self.data))
 
     def insert(self, e):
         self.data.append(e)
-        bubble_up(self.data, len(self.data) - 1, key=self.key)
+        bubble_up(self.data, len(self.data) - 1, self.prevails)
 
     def peek(self):
         return self.data[0] # may raise IndexError
@@ -85,7 +90,7 @@ class MaxHeap:
         small = self.data.pop()
         if self.data:
             biggest, self.data[0] = self.data[0], small
-            pos = sink_down(self.data, 0, key=self.key)
+            pos = sink_down(self.data, 0, self.prevails)
             return biggest
         else:
             return small
@@ -95,6 +100,13 @@ class MaxHeap:
         while self.data:
             l.append(self.pop())
 
+MaxHeap = Heap
+
+class MinHeap(Heap):
+
+    def __init__(self, *args, **kwargs):
+        super(MinHeap, self).__init__(*args, max_heap=False, **kwargs)
+
 class TestMaxHeap(unittest.TestCase):
 
     @given(st.lists(st.integers()))
@@ -102,26 +114,25 @@ class TestMaxHeap(unittest.TestCase):
         h = MaxHeap()
         for x in xs:
             h.insert(x)
-            assert is_valid_heap(h.data)
+            assert is_valid_heap(h.data, h.prevails)
         out = []
         while h:
             out.append(h.pop())
-            assert is_valid_heap(h.data)
+            assert is_valid_heap(h.data, h.prevails)
         assert out == sorted(xs, reverse=True), xs
 
     @given(st.lists(st.integers()))
     def test_batched_inserting_and_deleting(self, xs):
         h = MaxHeap(init=xs)
-        assert is_valid_heap(h.data)
+        assert is_valid_heap(h.data, h.prevails)
         out = []
         h.empty_into(out)
         assert out == sorted(xs, reverse=True), xs
 
     @given(st.lists(st.integers()))
     def test_max_heap_as_min_heap(self, xs):
-        key = operator.neg
-        h = MaxHeap(init=xs, key=key)
-        assert is_valid_heap(h.data, key=key)
+        h = MinHeap(init=xs)
+        assert is_valid_heap(h.data, h.prevails)
         out = []
         h.empty_into(out)
         assert out == sorted(xs), xs
