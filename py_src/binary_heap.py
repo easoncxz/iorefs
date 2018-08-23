@@ -90,15 +90,16 @@ class Heap:
         small = self.data.pop()
         if self.data:
             biggest, self.data[0] = self.data[0], small
-            pos = sink_down(self.data, 0, self.prevails)
+            sink_down(self.data, 0, self.prevails)
             return biggest
         else:
             return small
 
-    def empty_into(self, l):
-        del l[:]
+    def empty_out(self):
+        out = []
         while self.data:
-            l.append(self.pop())
+            out.append(self.pop())
+        return out
 
 MaxHeap = Heap
 
@@ -126,15 +127,14 @@ class TestMaxHeap(unittest.TestCase):
         h = MaxHeap(init=xs)
         assert is_valid_heap(h.data, h.prevails)
         out = []
-        h.empty_into(out)
+        out = h.empty_out()
         assert out == sorted(xs, reverse=True), xs
 
     @given(st.lists(st.integers()))
     def test_max_heap_as_min_heap(self, xs):
         h = MinHeap(init=xs)
         assert is_valid_heap(h.data, h.prevails)
-        out = []
-        h.empty_into(out)
+        out = h.empty_out()
         assert out == sorted(xs), xs
 
 if __name__ == '__main__':
