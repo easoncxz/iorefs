@@ -18,17 +18,20 @@ def right_child_0(pos):
 def identity(x):
     return x
 
-def bubble_up(arr, pos, prevails):
+def swap(l, i, j):
+    l[i], l[j] = l[j], l[i]
+
+def bubble_up(arr, pos, prevails, swap=swap):
     while pos > 0:
         parent_pos = parent_0(pos)
         if prevails(arr[pos], arr[parent_pos]):
-            arr[pos], arr[parent_pos] = arr[parent_pos], arr[pos]
+            swap(arr, pos, parent_pos)
             pos = parent_pos
         else:
             break
     return pos
 
-def sink_down(arr, pos, prevails):
+def sink_down(arr, pos, prevails, swap=swap):
     while pos < len(arr):
         largest_pos = pos
         left_pos = left_child_0(pos)
@@ -40,7 +43,7 @@ def sink_down(arr, pos, prevails):
         if largest_pos == pos:
             break
         else:
-            arr[pos], arr[largest_pos] = arr[largest_pos], arr[pos]
+            swap(arr, pos, largest_pos)
             pos = largest_pos
     return pos
 
@@ -115,17 +118,17 @@ class TestMaxHeap(unittest.TestCase):
         h = MaxHeap()
         for x in xs:
             h.insert(x)
-            assert is_valid_heap(h.data, h.prevails)
+            assert is_valid_heap(h.data, h.prevails), xs
         out = []
         while h:
             out.append(h.pop())
-            assert is_valid_heap(h.data, h.prevails)
+            assert is_valid_heap(h.data, h.prevails), xs
         assert out == sorted(xs, reverse=True), xs
 
     @given(st.lists(st.integers()))
     def test_batched_inserting_and_deleting(self, xs):
         h = MaxHeap(init=xs)
-        assert is_valid_heap(h.data, h.prevails)
+        assert is_valid_heap(h.data, h.prevails), xs
         out = []
         out = h.empty_out()
         assert out == sorted(xs, reverse=True), xs
@@ -133,7 +136,7 @@ class TestMaxHeap(unittest.TestCase):
     @given(st.lists(st.integers()))
     def test_max_heap_as_min_heap(self, xs):
         h = MinHeap(init=xs)
-        assert is_valid_heap(h.data, h.prevails)
+        assert is_valid_heap(h.data, h.prevails), xs
         out = h.empty_out()
         assert out == sorted(xs), xs
 
