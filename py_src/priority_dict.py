@@ -10,6 +10,9 @@ import binary_heap
 def identity(x):
     return x
 
+def noop(*args, **kwargs):
+    pass
+
 class Comparable:
     ''' Mixin from regebro's blog from 2010.
 
@@ -129,7 +132,27 @@ class PriorityDict:
         return self.data[self.lookup[k]].priority
 
     def __delitem__(self, k):
-        pass    # tricky; first bubble_up then pop
+        target_ix = self.lookup[k]
+        last_ix = len(self.data) - 1
+        target = self.data[target_ix]
+        last = self.data[last_ix]
+        self._swap_with_lookup_update(self.data, target_ix, last_ix)
+        del self.lookup[k]
+        self.data.pop()
+        if self.prevails(last, target):
+            propagate = binary_heap.bubble_up
+        elif self.prevails(target, last):
+            propagate = binary_heap.sink_down
+        else:
+            propagate = noop
+        propagate(
+                self.data,
+                target_ix,
+                self.prevails,
+                swap=self._swap_with_lookup_update)
+
+    def __elem__(self, k):
+        return k in self.lookup
 
     def __iter__(self):
         ''' Yields keys in priority order '''
@@ -149,21 +172,17 @@ class PriorityDict:
         return self.data[0]
 
     def pop(self):
-        leaf = self.data.pop()
-        if self.data:
-            top = self.data[0]
-            self.data[0] = leaf
-            del self.lookup[top.key]
-            self.lookup[leaf.key] = 0
-            binary_heap.sink_down(
-                    self.data,
-                    0,
-                    self.prevails,
-                    swap=self._swap_with_lookup_update)
-            return top
-        else:
-            del self.lookup[leaf.key]
-            return leaf
+        target_ix = 0
+        last_ix = len(self.data) - 1
+        self._swap_with_lookup_update(self.data, target_ix, last_ix)
+        target = self.data.pop()
+        del self.lookup[target.key]
+        binary_heap.sink_down(
+                self.data,
+                target_ix,
+                self.prevails,
+                swap=self._swap_with_lookup_update)
+        return target
 
 class TestPriorityDict(unittest.TestCase):
 
@@ -176,7 +195,10 @@ class TestPriorityDict(unittest.TestCase):
         while pd:
             out.append(pd.pop().key)
             pd_predicate(pd)
-        assert out == sorted(out), xs
+        assert out == sorted(out), (xs, out)
+
+    def _priority_dict_from_list(self, xs):
+        return PriorityDict({x: x for x in xs})
 
     @given(st.lists(st.integers()))
     def test_one_by_one_inserting_and_deleting_maintains_heap_propperty(self, xs):
@@ -192,15 +214,40 @@ class TestPriorityDict(unittest.TestCase):
 
     @given(st.lists(st.integers()))
     def test_iteration_gives_unique_items_in_asc_sorted_order(self, xs):
-        pd = PriorityDict({x: x for x in xs})
+        pd = self._priority_dict_from_list(xs)
         assert list(pd) == sorted(set(xs)), xs
 
-    @given(st.integers())
-    def test_inserting_duplicates(self, x):
-        pd = PriorityDict()
+    @given(st.lists(st.integers()), st.integers())
+    def test_write_invariant(self, xs, x):
+        pd = self._priority_dict_from_list(xs)
+        pd[x] = x
+        assert pd[x] == x, pd
+
+    @given(st.lists(st.integers()), st.integers())
+    def test_inserting_duplicates(self, xs, x):
+        pd = self._priority_dict_from_list(xs)
         pd[x] = x
         pd[x] = x # again
-        assert len(pd) == 1, pd
+        uniq = set(xs).union({x})
+        assert len(pd) == len(uniq), pd
+
+    @given(st.lists(st.integers()), st.integers())
+    def test_inserting_results_in_correct_len(self, xs, x):
+        pd = self._priority_dict_from_list(xs)
+        pd[x] = x
+        uniq = set(xs)
+        if x in uniq:
+            assert len(pd) == len(uniq), (xs, x, pd)
+        else:
+            assert len(pd) == len(uniq) + 1, (xs, x, pd)
+
+    @given(st.lists(st.integers()), st.integers())
+    def test_delete_invariant(self, xs, x):
+        uniq = set(xs)
+        pd = self._priority_dict_from_list(xs)
+        if x in uniq:
+            del pd[x]
+        assert x not in pd, (xs, x, pd)
 
 if __name__ == '__main__':
     unittest.main()
