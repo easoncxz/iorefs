@@ -1,5 +1,4 @@
 
-import operator
 import unittest
 
 from hypothesis import given, assume
@@ -11,31 +10,26 @@ import binary_heap
 def noop(*args, **kwargs):
     pass
 
-class KeyPriority(Comparable):
-    ''' A wrapper that gets comparison from the priorities '''
+def key(kp):
+    k, _ = kp
+    return k
 
-    def __init__(self, k, p):
-        self.key = k
-        self.priority = p
+def priority(kp):
+    _, p = kp
+    return p
 
-    def __repr__(self):
-        return "<KeyPriority(key={}, priority={})>".format(
-                repr(self.key),
-                repr(self.priority))
-
-    def __neg__(self):
-        return KeyPriority(self.key, -self.priority)
-
-    def _cmpkey(self):
-        return self.priority
+def kp_prevails(kp1, kp2):
+    _, p1 = kp1
+    _, p2 = kp2
+    return p1 < p2
 
 def lookup_matches_array(lookup, arr):
     try:
         for k in lookup:
-            if arr[lookup[k]].key != k:
+            if key(arr[lookup[k]]) != k:
                 return False
         for i, kp in enumerate(arr):
-            if lookup[kp.key] != i:
+            if lookup[key(kp)] != i:
                 return False
     except KeyError:
         return False
@@ -46,12 +40,12 @@ class PriorityDict:
     '''
 
     def __init__(self, init=None):
-        self.prevails = operator.lt
+        self.prevails = kp_prevails
         self.data = [] if init is None else (
             binary_heap.make_heap(
-                [KeyPriority(k, p) for k, p in init.items()],
+                list(init.items()),
                 self.prevails))
-        self.lookup = {kp.key: i for i, kp in enumerate(self.data)}
+        self.lookup = {k: i for i, (k, _) in enumerate(self.data)}
 
     def copy(self):
         fresh = PriorityDict()
@@ -62,7 +56,8 @@ class PriorityDict:
 
     def _swap_with_lookup_update(self, arr, i, j):
         arr[i], arr[j] = arr[j], arr[i]
-        self.lookup[arr[i].key], self.lookup[arr[j].key] = i, j
+        (ki, _), (kj, _) = arr[i], arr[j]
+        self.lookup[ki], self.lookup[kj] = i, j
 
     def __len__(self):
         return len(self.data)
@@ -75,7 +70,7 @@ class PriorityDict:
     def __setitem__(self, k, p):
         ix = self.lookup.get(k)
         if ix is None:
-            self.data.append(KeyPriority(k, p))
+            self.data.append((k, p))
             self.lookup[k] = len(self.data) - 1
             binary_heap.bubble_up(
                     self.data,
@@ -84,7 +79,7 @@ class PriorityDict:
                     swap=self._swap_with_lookup_update)
         else:
             old_kp = self.data[ix]
-            new_kp = KeyPriority(k, p)
+            new_kp = (k, p)
             self.data[ix] = new_kp
             if self.prevails(new_kp, old_kp):
                 propagate = binary_heap.bubble_up
@@ -97,7 +92,8 @@ class PriorityDict:
                 swap=self._swap_with_lookup_update)
 
     def __getitem__(self, k):
-        return self.data[self.lookup[k]].priority
+        _, p = self.data[self.lookup[k]]
+        return p
 
     def __delitem__(self, k):
         target_ix = self.lookup[k]
@@ -133,24 +129,24 @@ class PriorityDict:
         # O(n * log(n)) runtime, like heapsort
         shallow = self.copy()
         while shallow:
-            kp = shallow.pop()
-            yield kp.key, kp.priority
+            yield shallow.pop()
 
     def peek(self):
-        return self.data[0]
+        k, p = self.data[0]
+        return k, p
 
     def pop(self):
-        target_ix = 0
+        ix = 0
         last_ix = len(self.data) - 1
-        self._swap_with_lookup_update(self.data, target_ix, last_ix)
-        target = self.data.pop()
-        del self.lookup[target.key]
+        self._swap_with_lookup_update(self.data, ix, last_ix)
+        k, p = self.data.pop()
+        del self.lookup[k]
         binary_heap.sink_down(
                 self.data,
-                target_ix,
+                ix,
                 self.prevails,
                 swap=self._swap_with_lookup_update)
-        return target
+        return k, p
 
 class TestPriorityDict(unittest.TestCase):
 
@@ -161,7 +157,7 @@ class TestPriorityDict(unittest.TestCase):
             pd_predicate(pd)
         out = []
         while pd:
-            out.append(pd.pop().key)
+            out.append(key(pd.pop()))
             pd_predicate(pd)
         assert out == sorted(out), (xs, out)
 
