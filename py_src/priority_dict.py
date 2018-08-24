@@ -83,11 +83,11 @@ class PriorityDict:
         self.lookup = {kp.key: i for i, kp in enumerate(self.data)}
 
     def copy(self):
-        pd = PriorityDict()
-        pd.prevails = self.prevails
-        pd.data = [kp for kp in self.data]
-        pd.lookup = {kp.key: i for i, kp in enumerate(self.data)}
-        return pd
+        fresh = PriorityDict()
+        fresh.prevails = self.prevails
+        fresh.data = list(self.data)
+        fresh.lookup = dict(self.lookup)
+        return fresh
 
     def _swap_with_lookup_update(self, arr, i, j):
         arr[i], arr[j] = arr[j], arr[i]
