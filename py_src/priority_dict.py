@@ -237,5 +237,13 @@ class TestPriorityDict(unittest.TestCase):
             assert x == y, (x, y, one, other, xs, different)
         assert not one and not other, (one, other, xs, different)
 
+    @given(st.dictionaries(st.integers(), st.integers()))
+    def test_peek_matches_pop(self, d):
+        pd = PriorityDict(d)
+        assume(pd)
+        x = pd.peek()
+        y = pd.pop()
+        assert x == y, (x, y, pd, d)
+
 if __name__ == '__main__':
     unittest.main()
