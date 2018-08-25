@@ -14,14 +14,17 @@ def key(kp):
     k, _ = kp
     return k
 
+def priority(kp):
+    _, p = kp
+    return p
+
 def kp_prevails(kp1, kp2):
     _, p1 = kp1
     _, p2 = kp2
     return p1 < p2
 
 class PriorityDict:
-    ''' A dict ordered by ascending values
-    '''
+    ''' A dict ordered by ascending values '''
 
     def __init__(self, init=None):
         self.prevails = kp_prevails
@@ -62,6 +65,12 @@ class PriorityDict:
     def _fixup(self, ix):
         binary_heap.fixup(self.data, ix, self.prevails, swap=self._swap_with_lookup)
 
+    def get(self, k):
+        if k not in self:
+            return None
+        else:
+            return self[k]
+
     def __getitem__(self, k):
         _, p = self.data[self.lookup[k]]
         return p
@@ -98,6 +107,14 @@ class PriorityDict:
         while shallow:
             yield shallow.pop()
 
+    def to_dict(self):
+        return {k: priority(self.data[ix]) for k, ix in self.lookup.items()}
+
+    def __eq__(self, other):
+        if not isinstance(other, PriorityDict):
+            raise TypeError("{} is not a PriorityDict".format(repr(other)))
+        return self.to_dict() == other.to_dict()
+
     def peek(self):
         k, p = self.data[0]
         return k, p
@@ -110,15 +127,14 @@ class PriorityDict:
         return target
 
 def lookup_matches_array(lookup, arr):
-    try:
-        for k in lookup:
-            if key(arr[lookup[k]]) != k:
-                return False
-        for i, kp in enumerate(arr):
-            if lookup[key(kp)] != i:
-                return False
-    except KeyError:
+    if len(lookup) != len(arr):
         return False
+    for k in lookup:
+        if key(arr[lookup[k]]) != k:
+            return False
+    for i, kp in enumerate(arr):
+        if lookup[key(kp)] != i:
+            return False
     return True
 
 class TestPriorityDict(unittest.TestCase):
@@ -179,10 +195,31 @@ class TestPriorityDict(unittest.TestCase):
     def test_delete_invariant(self, xs, x):
         uniq = set(xs)
         pd = self._priority_dict_from_list(xs)
+        assert (x in uniq) == (x in pd), (xs, x, pd)
         if x in uniq:
             del pd[x]
         assert x not in pd, (xs, x, pd)
         self._assert_valid_pd(pd)
+
+    @given(st.dictionaries(st.characters(), st.integers()))
+    def test_dictionary_roundtrip_identity(self, d):
+        pd = PriorityDict(d)
+        self._assert_valid_pd(pd)
+        from_pd = dict(pd.items())
+        back_into_pd = PriorityDict(from_pd)
+        assert from_pd == d, (d, pd)
+        assert back_into_pd == pd, (back_into_pd, pd, d)
+
+    @given(st.dictionaries(st.integers(), st.integers()), st.integers())
+    def test_dictionary_lookup_equivalence(self, d, x):
+        pd = PriorityDict(d)
+        assert pd.to_dict() == d, (pd, d)
+        assert pd.get(x) == d.get(x), (pd, d, x)
+
+    @given(st.dictionaries(st.integers(), st.integers()))
+    def test_to_dict_matches_iteration(self, d):
+        pd = PriorityDict(d)
+        assert pd.to_dict() == dict(d.items()), (d, pd)
 
 if __name__ == '__main__':
     unittest.main()
