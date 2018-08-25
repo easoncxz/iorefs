@@ -1,2 +1,4 @@
 hypothesis
 yapf
+mypy
+typing_extensions

@@ -5,6 +5,7 @@ iorefs.cabal
 .venv
 **/*.pyc
 **/__pycache__/
+**/.mypy_cache/
 
 # Python property-based testing
 .hypothesis
