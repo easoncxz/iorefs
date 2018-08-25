@@ -1,4 +1,3 @@
-
 import operator
 import random
 import unittest
@@ -6,20 +5,26 @@ import unittest
 from hypothesis import given
 import hypothesis.strategies as st
 
+
 def parent_0(pos):
     return (pos + 1) // 2 - 1
+
 
 def left_child_0(pos):
     return 2 * (pos + 1) - 1
 
+
 def right_child_0(pos):
     return 2 * (pos + 1)
+
 
 def identity(x):
     return x
 
+
 def swap(l, i, j):
     l[i], l[j] = l[j], l[i]
+
 
 def bubble_up(arr, pos, prevails, swap=swap):
     while pos > 0:
@@ -30,6 +35,7 @@ def bubble_up(arr, pos, prevails, swap=swap):
         else:
             break
     return pos
+
 
 def sink_down(arr, pos, prevails, swap=swap):
     while pos < len(arr):
@@ -47,18 +53,22 @@ def sink_down(arr, pos, prevails, swap=swap):
             pos = largest_pos
     return pos
 
+
 def fixup(arr, pos, prevails, swap=swap):
     if 0 <= pos and pos < len(arr):
         bubble_up(arr, pos, prevails, swap=swap)
         sink_down(arr, pos, prevails, swap=swap)
 
+
 def internal_node_indices(arr):
     return range(parent_0(len(arr) - 1), -1, -1)
+
 
 def make_heap(l, prevails):
     for i in internal_node_indices(l):
         sink_down(l, i, prevails)
     return l
+
 
 def is_valid_heap(arr, prevails):
     for i in internal_node_indices(arr):
@@ -66,33 +76,31 @@ def is_valid_heap(arr, prevails):
         l = left_child_0(i)
         r = right_child_0(i)
         if l < n and prevails(arr[l], arr[i]) or (
-                r < n and prevails(arr[r], arr[i])):
+            (r < n and prevails(arr[r], arr[i]))):
             return False
     return True
 
-class Heap:
 
+class Heap:
     def __init__(self, init=None, max_heap=True):
         self.is_max_heap = max_heap
         self.prevails = operator.gt if max_heap else operator.lt
         self.data = make_heap(
-                [] if init is None else list(init),
-                self.prevails)
+            [] if init is None else list(init), self.prevails)
 
     def __len__(self):
         return len(self.data)
 
     def __repr__(self):
         return "<Heap(is_max_heap={}, data={})>".format(
-                repr(self.is_max_heap),
-                repr(self.data))
+            repr(self.is_max_heap), repr(self.data))
 
     def insert(self, e):
         self.data.append(e)
         bubble_up(self.data, len(self.data) - 1, self.prevails)
 
     def peek(self):
-        return self.data[0] # may raise IndexError
+        return self.data[0]  # may raise IndexError
 
     def pop(self):
         small = self.data.pop()
@@ -109,15 +117,16 @@ class Heap:
             out.append(self.pop())
         return out
 
+
 MaxHeap = Heap
 
-class MinHeap(Heap):
 
+class MinHeap(Heap):
     def __init__(self, *args, **kwargs):
         super(MinHeap, self).__init__(*args, max_heap=False, **kwargs)
 
-class TestMaxHeap(unittest.TestCase):
 
+class TestMaxHeap(unittest.TestCase):
     @given(st.lists(st.integers()))
     def test_one_by_one_inserting_and_deleting(self, xs):
         h = MaxHeap()

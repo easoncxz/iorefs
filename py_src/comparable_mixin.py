@@ -1,5 +1,5 @@
-
 import operator
+
 
 class Comparable:
     ''' Mixin from regebro's blog from 2010.

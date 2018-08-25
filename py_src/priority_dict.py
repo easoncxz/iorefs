@@ -1,4 +1,3 @@
-
 import unittest
 import random
 
@@ -7,21 +6,26 @@ import hypothesis.strategies as st
 
 import binary_heap
 
+
 def noop(*args, **kwargs):
     pass
+
 
 def key(kp):
     k, _ = kp
     return k
 
+
 def priority(kp):
     _, p = kp
     return p
+
 
 def kp_prevails(kp1, kp2):
     _, p1 = kp1
     _, p2 = kp2
     return p1 < p2
+
 
 class PriorityDict:
     ''' A dict ordered by ascending values '''
@@ -29,15 +33,12 @@ class PriorityDict:
     def __init__(self, init=None):
         self.prevails = kp_prevails
         self.data = [] if init is None else (
-            binary_heap.make_heap(
-                list(init.items()),
-                self.prevails))
+            binary_heap.make_heap(list(init.items()), self.prevails))
         self.lookup = {k: i for i, (k, _) in enumerate(self.data)}
 
     def __repr__(self):
         return "<PriorityDict(data={}, lookup={})>".format(
-                repr(self.data),
-                repr(self.lookup))
+            repr(self.data), repr(self.lookup))
 
     def __len__(self):
         return len(self.data)
@@ -63,7 +64,8 @@ class PriorityDict:
         return k, p
 
     def _fixup(self, ix):
-        binary_heap.fixup(self.data, ix, self.prevails, swap=self._swap_with_lookup)
+        binary_heap.fixup(
+            self.data, ix, self.prevails, swap=self._swap_with_lookup)
 
     def get(self, k):
         if k not in self:
@@ -126,6 +128,7 @@ class PriorityDict:
         self._fixup(ix)
         return target
 
+
 def lookup_matches_array(lookup, arr):
     if len(lookup) != len(arr):
         return False
@@ -137,8 +140,8 @@ def lookup_matches_array(lookup, arr):
             return False
     return True
 
-class TestPriorityDict(unittest.TestCase):
 
+class TestPriorityDict(unittest.TestCase):
     def _priority_dict_from_list(self, xs):
         return PriorityDict({x: x for x in xs})
 
@@ -175,7 +178,7 @@ class TestPriorityDict(unittest.TestCase):
     def test_inserting_duplicates(self, xs, x):
         pd = self._priority_dict_from_list(xs)
         pd[x] = x
-        pd[x] = x # again
+        pd[x] = x  # again
         uniq = set(xs).union({x})
         assert len(pd) == len(uniq), pd
         self._assert_valid_pd(pd)
@@ -246,9 +249,10 @@ class TestPriorityDict(unittest.TestCase):
         assert x == y, (x, y, pd, d)
 
     @given(
-            st.dictionaries(st.integers(), st.integers()),
-            st.integers(),
-            st.data())
+        st.dictionaries(st.integers(), st.integers()),
+        st.integers(),
+        st.data(),
+    )
     def test_copy_diverges(self, d, x, data):
         k = data.draw(st.sampled_from(sorted(d.keys())))
         assume(d[k] != x)
@@ -258,6 +262,7 @@ class TestPriorityDict(unittest.TestCase):
         assert pd == copy, (pd, copy, d, x)
         pd[k] = x
         assert pd != copy, (pd, copy, d, x)
+
 
 if __name__ == '__main__':
     unittest.main()
