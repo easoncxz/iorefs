@@ -47,6 +47,11 @@ def sink_down(arr, pos, prevails, swap=swap):
             pos = largest_pos
     return pos
 
+def fixup(arr, pos, prevails, swap=swap):
+    if 0 <= pos and pos < len(arr):
+        bubble_up(arr, pos, prevails, swap=swap)
+        sink_down(arr, pos, prevails, swap=swap)
+
 def internal_node_indices(arr):
     return range(parent_0(len(arr) - 1), -1, -1)
 
@@ -139,6 +144,16 @@ class TestMaxHeap(unittest.TestCase):
         assert is_valid_heap(h.data, h.prevails), xs
         out = h.empty_out()
         assert out == sorted(xs), xs
+
+    @given(st.lists(st.integers()), st.integers(), st.data())
+    def test_fixup_can_fix_anything(self, xs, x, data):
+        h = MaxHeap(init=xs)
+        assert is_valid_heap(h.data, h.prevails), (xs, h)
+        ix = data.draw(st.sampled_from(range(len(xs))))
+        h.data[ix] = x  # arbitrary mess-up!
+        fixup(h.data, ix, h.prevails)
+        assert is_valid_heap(h.data, h.prevails), (xs, h)
+
 
 if __name__ == '__main__':
     # To run tests: python3 py_src/binary_heap.py

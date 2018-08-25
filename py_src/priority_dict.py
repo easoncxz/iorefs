@@ -60,17 +60,7 @@ class PriorityDict:
         return k, p
 
     def _fixup(self, ix):
-        if 0 <= ix and ix < len(self.data):
-            higher = binary_heap.bubble_up(
-                self.data,
-                ix,
-                self.prevails,
-                swap=self._swap_with_lookup)
-            binary_heap.sink_down(
-                self.data,
-                higher,
-                self.prevails,
-                swap=self._swap_with_lookup)
+        binary_heap.fixup(self.data, ix, self.prevails, swap=self._swap_with_lookup)
 
     def __getitem__(self, k):
         _, p = self.data[self.lookup[k]]
