@@ -43,12 +43,16 @@ class PriorityDict:
                 self.prevails))
         self.lookup = {k: i for i, (k, _) in enumerate(self.data)}
 
-    def copy(self):
-        fresh = PriorityDict()
-        fresh.prevails = self.prevails
-        fresh.data = list(self.data)
-        fresh.lookup = dict(self.lookup)
-        return fresh
+    def __repr__(self):
+        return "<PriorityDict(data={}, lookup={})>".format(
+                repr(self.data),
+                repr(self.lookup))
+
+    def __len__(self):
+        return len(self.data)
+
+    def __elem__(self, k):
+        return k in self.lookup
 
     def _swap_with_lookup(self, arr, i, j):
         ''' Swap elements in the given array while maintaining `lookup` to be valid '''
@@ -67,13 +71,9 @@ class PriorityDict:
         del self.lookup[k]
         return k, p
 
-    def __len__(self):
-        return len(self.data)
-
-    def __repr__(self):
-        return "<PriorityDict(data={}, lookup={})>".format(
-                repr(self.data),
-                repr(self.lookup))
+    def __getitem__(self, k):
+        _, p = self.data[self.lookup[k]]
+        return p
 
     def __setitem__(self, k, p):
         ix = self.lookup.get(k)
@@ -98,20 +98,20 @@ class PriorityDict:
                 self.prevails,
                 swap=self._swap_with_lookup)
 
-    def __getitem__(self, k):
-        _, p = self.data[self.lookup[k]]
-        return p
-
     def __delitem__(self, k):
         self.pop(key=k)
-
-    def __elem__(self, k):
-        return k in self.lookup
 
     def __iter__(self):
         ''' Yields keys in priority order '''
         for k, _ in self.items():
             yield k
+
+    def copy(self):
+        fresh = PriorityDict()
+        fresh.prevails = self.prevails
+        fresh.data = list(self.data)
+        fresh.lookup = dict(self.lookup)
+        return fresh
 
     def items(self):
         ''' Yields key-priority pairs in priority order; good with `dict` '''
