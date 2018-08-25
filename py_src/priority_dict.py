@@ -1,10 +1,10 @@
 
 import unittest
+import random
 
 from hypothesis import given, assume
 import hypothesis.strategies as st
 
-from comparable_mixin import Comparable
 import binary_heap
 
 def noop(*args, **kwargs):
@@ -220,6 +220,22 @@ class TestPriorityDict(unittest.TestCase):
     def test_to_dict_matches_iteration(self, d):
         pd = PriorityDict(d)
         assert pd.to_dict() == dict(d.items()), (d, pd)
+
+    @given(st.lists(st.integers()))
+    def test_differently_ordered_priority_dicts_are_equivalent(self, xs):
+        different = list(xs)
+        random.shuffle(different)
+        assume(different != xs)
+        one = self._priority_dict_from_list(xs)
+        other = self._priority_dict_from_list(different)
+        assume(one.data != other.data)
+        assume(one.lookup != other.lookup)
+        while one and other:
+            assert one == other, (one, other, xs, different)
+            x = one.pop()
+            y = other.pop()
+            assert x == y, (x, y, one, other, xs, different)
+        assert not one and not other, (one, other, xs, different)
 
 if __name__ == '__main__':
     unittest.main()
