@@ -19,18 +19,6 @@ def kp_prevails(kp1, kp2):
     _, p2 = kp2
     return p1 < p2
 
-def lookup_matches_array(lookup, arr):
-    try:
-        for k in lookup:
-            if key(arr[lookup[k]]) != k:
-                return False
-        for i, kp in enumerate(arr):
-            if lookup[key(kp)] != i:
-                return False
-    except KeyError:
-        return False
-    return True
-
 class PriorityDict:
     ''' A dict ordered by ascending values
     '''
@@ -71,6 +59,19 @@ class PriorityDict:
         del self.lookup[k]
         return k, p
 
+    def _fixup(self, ix):
+        if 0 <= ix and ix < len(self.data):
+            higher = binary_heap.bubble_up(
+                self.data,
+                ix,
+                self.prevails,
+                swap=self._swap_with_lookup)
+            binary_heap.sink_down(
+                self.data,
+                higher,
+                self.prevails,
+                swap=self._swap_with_lookup)
+
     def __getitem__(self, k):
         _, p = self.data[self.lookup[k]]
         return p
@@ -79,24 +80,10 @@ class PriorityDict:
         ix = self.lookup.get(k)
         if ix is None:
             self._append_with_lookup(k, p)
-            binary_heap.bubble_up(
-                    self.data,
-                    len(self.data) - 1,
-                    self.prevails,
-                    swap=self._swap_with_lookup)
+            ix = len(self.data) - 1
         else:
-            old_kp = self.data[ix]
-            new_kp = (k, p)
-            self.data[ix] = new_kp
-            if self.prevails(new_kp, old_kp):
-                propagate = binary_heap.bubble_up
-            else:
-                propagate = binary_heap.sink_down
-            propagate(
-                self.data,
-                ix,
-                self.prevails,
-                swap=self._swap_with_lookup)
+            self.data[ix] = k, p
+        self._fixup(ix)
 
     def __delitem__(self, k):
         self.pop(key=k)
@@ -126,23 +113,23 @@ class PriorityDict:
         return k, p
 
     def pop(self, key=None):
-        target_ix = 0 if key is None else self.lookup[key]
-        last_ix = len(self.data) - 1
-        last = self.data[last_ix]
-        self._swap_with_lookup(self.data, target_ix, last_ix)
+        ix = 0 if key is None else self.lookup[key]
+        self._swap_with_lookup(self.data, ix, len(self.data) - 1)
         target = self._pop_with_lookup()
-        if self.prevails(last, target):
-            propagate = binary_heap.bubble_up
-        elif self.prevails(target, last):
-            propagate = binary_heap.sink_down
-        else:
-            propagate = noop
-        propagate(
-                self.data,
-                target_ix,
-                self.prevails,
-                swap=self._swap_with_lookup)
+        self._fixup(ix)
         return target
+
+def lookup_matches_array(lookup, arr):
+    try:
+        for k in lookup:
+            if key(arr[lookup[k]]) != k:
+                return False
+        for i, kp in enumerate(arr):
+            if lookup[key(kp)] != i:
+                return False
+    except KeyError:
+        return False
+    return True
 
 class TestPriorityDict(unittest.TestCase):
 
