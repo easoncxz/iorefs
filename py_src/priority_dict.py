@@ -245,5 +245,19 @@ class TestPriorityDict(unittest.TestCase):
         y = pd.pop()
         assert x == y, (x, y, pd, d)
 
+    @given(
+            st.dictionaries(st.integers(), st.integers()),
+            st.integers(),
+            st.data())
+    def test_copy_diverges(self, d, x, data):
+        k = data.draw(st.sampled_from(sorted(d.keys())))
+        assume(d[k] != x)
+        pd = PriorityDict(d)
+        copy = pd.copy()
+        assert pd is not copy, (copy, d, x)
+        assert pd == copy, (pd, copy, d, x)
+        pd[k] = x
+        assert pd != copy, (pd, copy, d, x)
+
 if __name__ == '__main__':
     unittest.main()
