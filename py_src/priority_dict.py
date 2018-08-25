@@ -135,46 +135,43 @@ class PriorityDict:
         k, p = self.data[0]
         return k, p
 
-    def pop(self):
-        ix = 0
+    def pop(self, key=None):
+        ix = 0 if key is None else self.lookup[key]
         last_ix = len(self.data) - 1
         self._swap_with_lookup_update(self.data, ix, last_ix)
         k, p = self.data.pop()
         del self.lookup[k]
         binary_heap.sink_down(
                 self.data,
-                ix,
+                binary_heap.bubble_up(
+                        self.data,
+                        ix,
+                        self.prevails,
+                        swap=self._swap_with_lookup_update),
                 self.prevails,
                 swap=self._swap_with_lookup_update)
         return k, p
 
 class TestPriorityDict(unittest.TestCase):
 
-    def _one_by_one(self, xs, pd_predicate):
-        pd = PriorityDict()
-        for x in xs:
-            pd[x] = x
-            pd_predicate(pd)
-        out = []
-        while pd:
-            out.append(key(pd.pop()))
-            pd_predicate(pd)
-        assert out == sorted(out), (xs, out)
-
     def _priority_dict_from_list(self, xs):
         return PriorityDict({x: x for x in xs})
 
-    @given(st.lists(st.integers()))
-    def test_one_by_one_inserting_and_deleting_maintains_heap_propperty(self, xs):
-        def has_valid_heap(pd):
-            assert binary_heap.is_valid_heap(pd.data, pd.prevails), pd
-        self._one_by_one(xs, has_valid_heap)
+    def _assert_valid_pd(self, pd):
+        assert binary_heap.is_valid_heap(pd.data, pd.prevails), pd
+        assert lookup_matches_array(pd.lookup, pd.data), pd
 
     @given(st.lists(st.integers()))
-    def test_one_by_one_inserting_and_deleting_maintains_correct_lookup_table(self, xs):
-        def has_valid_lookup(pd):
-            assert lookup_matches_array(pd.lookup, pd.data), pd
-        self._one_by_one(xs, has_valid_lookup)
+    def test_one_by_one_inserting_and_deleting(self, xs):
+        pd = PriorityDict()
+        for x in xs:
+            pd[x] = x
+            self._assert_valid_pd(pd)
+        out = []
+        while pd:
+            out.append(key(pd.pop()))
+            self._assert_valid_pd(pd)
+        assert out == sorted(set(xs)), (xs, out)
 
     @given(st.lists(st.integers()))
     def test_iteration_gives_unique_items_in_asc_sorted_order(self, xs):
@@ -186,6 +183,8 @@ class TestPriorityDict(unittest.TestCase):
         pd = self._priority_dict_from_list(xs)
         pd[x] = x
         assert pd[x] == x, pd
+        assert x in pd, (xs, x, pd)
+        self._assert_valid_pd(pd)
 
     @given(st.lists(st.integers()), st.integers())
     def test_inserting_duplicates(self, xs, x):
@@ -194,6 +193,7 @@ class TestPriorityDict(unittest.TestCase):
         pd[x] = x # again
         uniq = set(xs).union({x})
         assert len(pd) == len(uniq), pd
+        self._assert_valid_pd(pd)
 
     @given(st.lists(st.integers()), st.integers())
     def test_inserting_results_in_correct_len(self, xs, x):
@@ -204,6 +204,7 @@ class TestPriorityDict(unittest.TestCase):
             assert len(pd) == len(uniq), (xs, x, pd)
         else:
             assert len(pd) == len(uniq) + 1, (xs, x, pd)
+        self._assert_valid_pd(pd)
 
     @given(st.lists(st.integers()), st.integers())
     def test_delete_invariant(self, xs, x):
@@ -212,6 +213,7 @@ class TestPriorityDict(unittest.TestCase):
         if x in uniq:
             del pd[x]
         assert x not in pd, (xs, x, pd)
+        self._assert_valid_pd(pd)
 
 if __name__ == '__main__':
     unittest.main()
