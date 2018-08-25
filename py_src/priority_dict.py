@@ -96,24 +96,7 @@ class PriorityDict:
         return p
 
     def __delitem__(self, k):
-        target_ix = self.lookup[k]
-        last_ix = len(self.data) - 1
-        target = self.data[target_ix]
-        last = self.data[last_ix]
-        self._swap_with_lookup_update(self.data, target_ix, last_ix)
-        del self.lookup[k]
-        self.data.pop()
-        if self.prevails(last, target):
-            propagate = binary_heap.bubble_up
-        elif self.prevails(target, last):
-            propagate = binary_heap.sink_down
-        else:
-            propagate = noop
-        propagate(
-                self.data,
-                target_ix,
-                self.prevails,
-                swap=self._swap_with_lookup_update)
+        self.pop(key=k)
 
     def __elem__(self, k):
         return k in self.lookup
@@ -136,21 +119,25 @@ class PriorityDict:
         return k, p
 
     def pop(self, key=None):
-        ix = 0 if key is None else self.lookup[key]
+        target_ix = 0 if key is None else self.lookup[key]
         last_ix = len(self.data) - 1
-        self._swap_with_lookup_update(self.data, ix, last_ix)
-        k, p = self.data.pop()
+        last = self.data[last_ix]
+        self._swap_with_lookup_update(self.data, target_ix, last_ix)
+        target = self.data.pop()
+        k, _ = target
         del self.lookup[k]
-        binary_heap.sink_down(
+        if self.prevails(last, target):
+            propagate = binary_heap.bubble_up
+        elif self.prevails(target, last):
+            propagate = binary_heap.sink_down
+        else:
+            propagate = noop
+        propagate(
                 self.data,
-                binary_heap.bubble_up(
-                        self.data,
-                        ix,
-                        self.prevails,
-                        swap=self._swap_with_lookup_update),
+                target_ix,
                 self.prevails,
                 swap=self._swap_with_lookup_update)
-        return k, p
+        return target
 
 class TestPriorityDict(unittest.TestCase):
 
