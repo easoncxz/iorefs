@@ -14,10 +14,6 @@ def key(kp):
     k, _ = kp
     return k
 
-def priority(kp):
-    _, p = kp
-    return p
-
 def kp_prevails(kp1, kp2):
     _, p1 = kp1
     _, p2 = kp2
@@ -54,10 +50,22 @@ class PriorityDict:
         fresh.lookup = dict(self.lookup)
         return fresh
 
-    def _swap_with_lookup_update(self, arr, i, j):
+    def _swap_with_lookup(self, arr, i, j):
+        ''' Swap elements in the given array while maintaining `lookup` to be valid '''
         arr[i], arr[j] = arr[j], arr[i]
         (ki, _), (kj, _) = arr[i], arr[j]
         self.lookup[ki], self.lookup[kj] = i, j
+
+    def _append_with_lookup(self, k, p):
+        ''' Append an element at the end of the array while maintianing '''
+        self.data.append((k, p))
+        self.lookup[k] = len(self.data) - 1
+
+    def _pop_with_lookup(self):
+        ''' Pop the last item of the array '''
+        k, p = self.data.pop()
+        del self.lookup[k]
+        return k, p
 
     def __len__(self):
         return len(self.data)
@@ -70,13 +78,12 @@ class PriorityDict:
     def __setitem__(self, k, p):
         ix = self.lookup.get(k)
         if ix is None:
-            self.data.append((k, p))
-            self.lookup[k] = len(self.data) - 1
+            self._append_with_lookup(k, p)
             binary_heap.bubble_up(
                     self.data,
                     len(self.data) - 1,
                     self.prevails,
-                    swap=self._swap_with_lookup_update)
+                    swap=self._swap_with_lookup)
         else:
             old_kp = self.data[ix]
             new_kp = (k, p)
@@ -89,7 +96,7 @@ class PriorityDict:
                 self.data,
                 ix,
                 self.prevails,
-                swap=self._swap_with_lookup_update)
+                swap=self._swap_with_lookup)
 
     def __getitem__(self, k):
         _, p = self.data[self.lookup[k]]
@@ -122,10 +129,8 @@ class PriorityDict:
         target_ix = 0 if key is None else self.lookup[key]
         last_ix = len(self.data) - 1
         last = self.data[last_ix]
-        self._swap_with_lookup_update(self.data, target_ix, last_ix)
-        target = self.data.pop()
-        k, _ = target
-        del self.lookup[k]
+        self._swap_with_lookup(self.data, target_ix, last_ix)
+        target = self._pop_with_lookup()
         if self.prevails(last, target):
             propagate = binary_heap.bubble_up
         elif self.prevails(target, last):
@@ -136,7 +141,7 @@ class PriorityDict:
                 self.data,
                 target_ix,
                 self.prevails,
-                swap=self._swap_with_lookup_update)
+                swap=self._swap_with_lookup)
         return target
 
 class TestPriorityDict(unittest.TestCase):
