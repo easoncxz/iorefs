@@ -16,8 +16,11 @@ class Graph(Generic[N, E]):
     edges: iterable of pairs of nodes
     '''
 
-    def __init__(self, nodes: Iterable[N],
-                 edges: Iterable[Tuple[N, N, E]]) -> None:
+    def __init__(
+            self,
+            nodes: Iterable[N],
+            edges: Iterable[Tuple[N, N, E]],
+    ) -> None:
         self.matrix: Dict[N, Dict[N, E]] = {
             from_node: dict()
             for from_node in nodes
@@ -48,6 +51,7 @@ sample_graph = Graph[int, Unit](
     ],
 )
 
+
 class Todo(Protocol[N]):
     @abstractmethod
     def __init__(self, init: Iterable[N] = None) -> None:
@@ -60,6 +64,7 @@ class Todo(Protocol[N]):
     @abstractmethod
     def remove(self) -> N:
         pass
+
 
 class TodoStack(Generic[N]):
     def __init__(self, *args):
@@ -89,7 +94,11 @@ class TodoQueue(Generic[N]):
         return self.coll.popleft()
 
 
-def search(Todo: Type[Todo[N]], graph, start) -> Iterator[N]:
+def search(
+        Todo: Callable[[List[N]], Todo[N]],
+        graph: Graph[N, E],
+        start: N,
+) -> Iterator[N]:
     seen_nodes: Set[N] = set()
     todo = Todo([start])
     while todo:
@@ -110,7 +119,7 @@ def depth_first_search(graph: Graph[N, E], start: N) -> Iterator[N]:
     return search(TodoStack, graph, start)
 
 
-def breadth_first_search(graph, start):
+def breadth_first_search(graph: Graph[N, E], start: N) -> Iterator[N]:
     '''
     >>> list(breadth_first_search(sample_graph, 1))
     [1, 2, 3, 5, 4, 6, 8, 7]
