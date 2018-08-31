@@ -1,6 +1,6 @@
 from pprint import pprint
 from collections import deque
-from typing import TypeVar, Iterable, Iterator, Generic, Hashable, Dict, List, Tuple, Callable, Any, Set, Type
+from typing import TypeVar, Iterable, Iterator, Generic, Hashable, Dict, List, Tuple, Callable, Any, Set, Type, Deque
 from typing_extensions import Protocol
 from abc import abstractmethod
 
@@ -68,7 +68,7 @@ class Todo(Protocol[N]):
 
 class TodoStack(Generic[N]):
     def __init__(self, *args):
-        self.coll = deque(*args)
+        self.coll: Deque[N] = deque(*args)
 
     def __len__(self):
         return len(self.coll)
@@ -82,7 +82,7 @@ class TodoStack(Generic[N]):
 
 class TodoQueue(Generic[N]):
     def __init__(self, *args):
-        self.coll = deque(*args)
+        self.coll: Deque[N] = deque(*args)
 
     def __len__(self):
         return len(self.coll)
@@ -116,7 +116,8 @@ def depth_first_search(graph: Graph[N, E], start: N) -> Iterator[N]:
     >>> list(depth_first_search(sample_graph, 1))
     [1, 5, 8, 6, 7, 3, 4, 2]
     '''
-    return search(TodoStack, graph, start)
+    Todo: Type[TodoStack[N]] = TodoStack
+    return search(Todo, graph, start)
 
 
 def breadth_first_search(graph: Graph[N, E], start: N) -> Iterator[N]:
@@ -124,4 +125,5 @@ def breadth_first_search(graph: Graph[N, E], start: N) -> Iterator[N]:
     >>> list(breadth_first_search(sample_graph, 1))
     [1, 2, 3, 5, 4, 6, 8, 7]
     '''
-    return search(TodoQueue, graph, start)
+    Todo: Type[TodoQueue[N]] = TodoQueue
+    return search(Todo, graph, start)
