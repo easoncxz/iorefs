@@ -19,30 +19,47 @@ def show_graph(graph):
     nx.draw(graph, with_labels=True, font_weight='bold')
     plt.show()
 
-def search(Todo, graph, start):
+def search(Todo, graph, start, visit=None):
+    if visit is None:
+        visit = lambda *args, **kwargs: None
     seen_nodes = set()
     todo = Todo([(start, None)])
+    tree = nx.Graph()
     while todo:
-        node, src_data = todo.pop()
+        node, maybe_data = todo.pop()
         if node not in seen_nodes:
             seen_nodes.add(node)
-            yield node
+            visit(node)
+            tree.add_node(node)
+            if maybe_data is not None:
+                from_node, edge = maybe_data
+                tree.add_edge(from_node, node)
+                tree[from_node][node]['weight'] = edge
             for neighbour in sorted(graph[node]):
                 todo.add(neighbour, (node, graph[node][neighbour].get('weight')))
+    return tree
 
 sample_graph = nx.Graph()
 sample_graph.add_edges_from(sample_graph_edges)
 
 def depth_first_search(graph, start):
     '''
-    >>> list(depth_first_search(sample_graph, 1))
+    >>> journey, tree = depth_first_search(sample_graph, 1)
+    >>> journey
     [1, 5, 8, 6, 7, 3, 4, 2]
     '''
-    return search(TodoStack, graph, start)
+    journey = []
+    tree = search(TodoStack, graph, start, visit=journey.append)
+    return journey, tree
 
 def breadth_first_search(graph, start):
     '''
-    >>> list(depth_first_search(sample_graph, 1))
-    [1, 5, 8, 6, 7, 3, 4, 2]
+    >>> journey, tree = breadth_first_search(sample_graph, 1)
+    >>> journey
+    [1, 2, 3, 5, 4, 6, 7, 8]
+
+    Notice strange quirk about the flipped order of 7 and 8 compared to graph_search.py
     '''
-    return search(TodoQueue, graph, start)
+    journey = []
+    tree = search(TodoQueue, graph, start, visit=journey.append)
+    return journey, tree
