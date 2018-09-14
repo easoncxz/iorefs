@@ -45,5 +45,20 @@ myFoldR f z [] = z
 myFoldR f z (x:xs) = f x (myFoldR f z xs)
 
 myScanL :: (b -> a -> b) -> b -> [a] -> [b]
-myScanL f z [] = [z]
-myScanL f z (x:xs) = undefined
+myScanL f z xs = z : go f z xs
+  where
+    go f _ [] = []
+    go f z (x:xs) =
+      let z' = f z x
+       in z' : go f z' xs
+
+myScanL' :: (b -> a -> b) -> b -> [a] -> [b]
+myScanL' f z xs = z : go f z xs
+  where
+    go f _ [] = []
+    go f z (x:xs) =
+      let z' = f z x
+       in z' `seq` (z' : go f z' xs)
+
+prop_myScanL :: (Char -> Int -> Char) -> Char -> [Int] -> Bool
+prop_myScanL f z xs = myScanL f z xs == scanl f z xs
